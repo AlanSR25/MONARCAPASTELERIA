@@ -1813,10 +1813,10 @@ window.renderPosPedidos = function() {
                 <strong>Detalles:</strong><br>${notasCli.replace(/\n/g, '<br>')}
             </div>
             <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom: 5px;">
-                <span>Total: $${p.total}</span>
+                <span>Total: $${parseFloat(p.total || 0).toFixed(2)}</span>
                 <span style="color:${p.estado === 'pendiente' ? '#E59E27' : (p.estado === 'esperando_pago' ? '#E53E3E' : (p.estado === 'confirmado' ? '#2E7D32' : '#1976D2'))};">${p.estado.toUpperCase()}</span>
             </div>
-            ${p.anticipo > 0 ? `<div style="font-size:0.85rem; color:#2E7D32; font-weight:bold;">Anticipo Pagado: $${p.anticipo} (Resta: $${p.total - p.anticipo})</div>` : ''}
+            ${p.anticipo > 0 ? `<div style="font-size:0.85rem; color:#2E7D32; font-weight:bold;">Anticipo Pagado: $${parseFloat(p.anticipo).toFixed(2)} (Resta: $${(parseFloat(p.total) - parseFloat(p.anticipo)).toFixed(2)})</div>` : ''}
             ${actionBtn}
         `;
         
@@ -1967,7 +1967,7 @@ window.abrirDetallesPedido = function(id_pedido) {
         ajusteBox.style.display = 'none';
     }
     
-    document.getElementById('md-anticipo-info').innerText = p.anticipo > 0 ? `Anticipo Pagado: $${p.anticipo} (Resta: $${(p.total - p.anticipo)})` : 'Anticipo Pagado: $0.00';
+    document.getElementById('md-anticipo-info').innerText = p.anticipo > 0 ? `Anticipo Pagado: $${parseFloat(p.anticipo).toFixed(2)} (Resta: $${(parseFloat(p.total) - parseFloat(p.anticipo)).toFixed(2)})` : 'Anticipo Pagado: $0.00';
 
     // Manejar pagos (Transferencia)
     const comprobanteBox = document.getElementById('md-comprobante-box');

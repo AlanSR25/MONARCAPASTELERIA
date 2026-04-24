@@ -908,8 +908,12 @@
                 // --- NOTIFICACIÓN DE WHATSAPP ---
                 if (typeof window.enviarNotificacionWhatsApp === 'function') {
                     const origenStr = window.isStaff ? "MOSTRADOR/STAFF" : "CLIENTE WEB";
-                    let clienteN = nomInv || (window.currentUser ? window.currentUser.email : "Invitado");
-                    const msgWhatsApp = `👑 *NUEVO PEDIDO* (${origenStr}) 👑\nFolio: ${folioRandom}\nCliente: ${clienteN}\nTotal: $${window.precioActual}\n\n*Revisa la bandeja en el POS para aprobarlo.*`;
+                    let clienteN = nomInv || (window.currentUserEmail ? window.currentUserEmail : "Invitado");
+                    const pNombre = document.querySelector('input[name="prodRadio"]:checked')?.dataset.nombre || 'Personalizado';
+                    const tNombre = document.querySelector('input[name="tamanoRadio"]:checked')?.nextElementSibling.querySelector('.pill-title')?.innerText || '';
+                    const fechaTxt = document.getElementById('fecha').value + ' a las ' + document.getElementById('hora').value;
+                    
+                    const msgWhatsApp = `👑 *NUEVO PEDIDO* (${origenStr}) 👑\nFolio: ${folioRandom}\nCliente: ${clienteN}\nProducto: ${pNombre} (${tNombre})\nEntrega: ${fechaTxt}\nTotal: $${window.precioActual.toFixed(2)}\n\n*Revisa la bandeja en el POS para aprobarlo.*`;
                     window.enviarNotificacionWhatsApp(msgWhatsApp);
                 }
 

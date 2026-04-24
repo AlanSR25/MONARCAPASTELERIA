@@ -630,6 +630,7 @@
                 return;
             }
             window.currentUserId = session.user.id;
+            window.currentUserEmail = session.user.email;
             
             // Revisa si es admin o staff
             try {
@@ -833,7 +834,35 @@
             }
             if (desc) notasTexto += `Peticiones: ${desc}\n`;
 
+            const btnSubmit = e.target.querySelector('button[type="submit"]');
+            const originalBtnText = btnSubmit.innerHTML;
+            btnSubmit.innerHTML = "Subiendo orden y archivos... <i class='fas fa-spinner fa-spin'></i>";
+            btnSubmit.disabled = true;
+
             try {
+                // Subir imagenes de inspiracion
+                let urlsInspiracion = [];
+                if (isPastel) {
+                    const files = document.getElementById('imagen_pastel').files;
+                    if (files && files.length > 0) {
+                        for (let i = 0; i < files.length; i++) {
+                            const file = files[i];
+                            const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+                            const filePath = "inspiracion/" + Date.now() + "_" + safeName;
+                            const { error: uploadError } = await window.DB.storage.from('monarca-assets').upload(filePath, file, { cacheControl: '3600', upsert: false });
+                            if (!uploadError) {
+                                const { data: pubData } = window.DB.storage.from('monarca-assets').getPublicUrl(filePath);
+                                urlsInspiracion.push(pubData.publicUrl);
+                            } else {
+                                throw new Error(`Error subiendo imagen al bucket 'monarca-assets': ${uploadError.message}. Verifica que el bucket exista en Supabase y que sea PÚBLICO o permita INSERT en Storage Policies.`);
+                            }
+                        }
+                    }
+                }
+
+                if (urlsInspiracion.length > 0) {
+                    notasTexto += `\n[IMG_REF]` + urlsInspiracion.join('[IMG_REF]');
+                }
                 let finalIdCliente = window.currentUserId;
                 let emailInv = null;
                 let nomInv = null;
@@ -859,7 +888,7 @@
                 const {data: ins, error} = await window.DB.from('pedidos').insert({
                     folio: folioRandom,
                     id_cliente: finalIdCliente,
-                    email_invitado: emailInv,
+                    email_invitado: emailInv || window.currentUserEmail,
                     nombre_invitado: nomInv,
                     total: window.precioActual,
                     estado: 'pendiente'
@@ -890,6 +919,8 @@
                 console.error(err);
                 const msg = err.message || JSON.stringify(err);
                 alert("Error de Seguridad en Base de Datos (Supabase): " + msg + "\n\nSi dice '403' o 'RLS', ve al dashboard de Supabase -> Authentication o Table Editor y asegúrate de que la tabla 'pedidos' y 'detalle_pedido' tienen permisos (Policies) para insertar, o deshabilita el RLS temporalmente.");
+                btnSubmit.innerHTML = originalBtnText;
+                btnSubmit.disabled = false;
             }
         });
 

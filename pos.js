@@ -1651,7 +1651,7 @@ window.initPedidos = async function() {
     
     try {
         const {data: pedidos, error} = await window.DB.from('pedidos')
-            .select('*, detalle_pedido(*, producto_variantes(tamaño, productos(nombre, imagen_url))), perfiles_cliente(nombre_completo, email, telefono)')
+            .select('*, detalle_pedido(*, producto_variantes(tamaño, productos(nombre, imagen_url))), perfiles_cliente(nombre_completo, email, telefono), pagos(*)')
             .order('fecha_pedido', {ascending: false});
             
         if(error) throw error;
@@ -1782,35 +1782,30 @@ window.renderPosPedidos = function() {
 
         const det = (p.detalle_pedido && p.detalle_pedido.length > 0) ? p.detalle_pedido[0] : null;
         const nombreProd = det?.producto_variantes?.productos?.nombre || 'Orden Personalizada';
-        const notasCli = det?.observaciones_cliente || 'Sin notas';
+        const imagenProd = det?.producto_variantes?.productos?.imagen_url || 'img/luxury_pastries.png';
+        const notasCli = det?.observaciones_cliente ? det.observaciones_cliente.split('[IMG_REF]')[0].trim() : 'Sin notas';
         
-        let clienteNombre = p.nombre_invitado || (p.perfiles_cliente ? p.perfiles_cliente.nombre_completo : 'Cliente no registrado');
-        let clienteEmail = p.email_invitado || (p.perfiles_cliente ? p.perfiles_cliente.email : '');
-        let clienteTel = p.perfiles_cliente ? p.perfiles_cliente.telefono : '';
+        const isGuest = !p.id_cliente;
+        let clienteNombre = isGuest ? (p.nombre_invitado || 'Invitado') : (p.perfiles_cliente?.nombre_completo || p.perfiles_cliente?.email || 'Cliente');
+        let clienteEmail = isGuest ? (p.email_invitado || '') : (p.perfiles_cliente?.email || '');
+        let clienteTel = p.perfiles_cliente?.telefono ? ` - 📱 ${p.perfiles_cliente.telefono}` : '';
         
         const card = document.createElement('div');
         card.style = "background:#FFF; border:1px solid #E2E8F0; padding:15px; border-radius:8px; margin-bottom:15px; box-shadow:0 2px 4px rgba(0,0,0,0.02); position:relative;";
         
-        let actionBtn = '';
-        if(p.estado === 'pendiente') {
-            actionBtn = `<button class="btn btn-gold" style="width:100%; margin-top:10px;" onclick="cambiarEstadoPedido(${p.id_pedido}, 'esperando_pago')">Aprobar y Pedir Anticipo</button>`;
-        } else if (p.estado === 'esperando_pago') {
-            actionBtn = `<div style="display:flex; gap:10px; margin-top:10px;">
-                <button class="btn btn-gold" style="flex:1; font-size:0.8rem;" onclick="abrirCobroAnticipo('${p.folio}', ${p.total}, ${p.anticipo || 0}, ${p.id_pedido})"><i class="fas fa-money-bill-wave"></i> Cobrar Físico</button>
-                <button class="btn btn-black" style="flex:1; font-size:0.8rem;" onclick="cambiarEstadoPedido(${p.id_pedido}, 'confirmado')">A Producción</button>
-            </div>`;
-        } else if (p.estado === 'confirmado') {
-            actionBtn = `<button class="btn btn-black" style="width:100%; margin-top:10px;" onclick="cambiarEstadoPedido(${p.id_pedido}, 'entregado')">Marcar como Entregado</button>`;
-        }
+        let actionBtn = `<button class="btn btn-black" style="width:100%; margin-top:10px;" onclick="abrirDetallesPedido(${p.id_pedido})">Ver Detalles</button>`;
 
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                 <span style="font-weight:bold; font-family:var(--font-heading);">${p.folio}</span>
                 <span style="font-size:0.85rem; color:var(--pos-gray); background:#EDF2F7; padding:2px 8px; border-radius:10px;">📅 ${fStr}</span>
             </div>
-            <div style="margin-bottom:10px;">
-                <h4 style="margin:0; font-size:1.1rem;">${nombreProd}</h4>
-                <p style="margin:5px 0 0 0; font-size:0.85rem; color:var(--pos-gray);"><i class="fas fa-user"></i> ${clienteNombre} ${clienteEmail ? `(${clienteEmail})` : ''}</p>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <img src="${imagenProd}" alt="${nombreProd}" style="width:50px; height:50px; object-fit:cover; border-radius:6px; border:1px solid #E2E8F0;">
+                <div>
+                    <h4 style="margin:0; font-size:1.1rem;">${nombreProd}</h4>
+                    <p style="margin:5px 0 0 0; font-size:0.85rem; color:var(--pos-gray);"><i class="fas fa-user"></i> ${clienteNombre} ${clienteEmail ? `(${clienteEmail})` : ''}</p>
+                </div>
             </div>
             <div style="background:#F7FAFC; padding:10px; border-radius:6px; font-size:0.85rem; margin-bottom:10px; border-left:3px solid var(--gold-primary);">
                 <strong>Detalles:</strong><br>${notasCli.replace(/\n/g, '<br>')}
@@ -1894,5 +1889,162 @@ window.abrirCobroAnticipo = async function(folio, total, anticipoActual, id_pedi
         window.initPedidos();
     } catch(e) {
         alert("Error guardando el abono en BD: " + e.message);
+    }
+};
+
+// ==========================================
+// MODAL DE DETALLES MAESTROS
+// ==========================================
+window.currentDetallePedidoId = null;
+
+window.abrirDetallesPedido = function(id_pedido) {
+    const p = window.pedidosGlobal.find(x => x.id_pedido === id_pedido);
+    if(!p) return;
+    
+    window.currentDetallePedidoId = id_pedido;
+
+    document.getElementById('md-folio').innerText = p.folio;
+    
+    // Usuarios robusto
+    const isGuest = !p.id_cliente;
+    const clientName = isGuest ? (p.nombre_invitado || 'Invitado') : (p.perfiles_cliente?.nombre_completo || p.perfiles_cliente?.email || 'Cliente sin nombre registrado');
+    const clientTel = p.perfiles_cliente?.telefono ? ` 📱 ${p.perfiles_cliente.telefono}` : ' 📱 Sin teléfono';
+    const clientEmail = isGuest ? (p.email_invitado || '📧 Sin correo') : (`📧 ${p.perfiles_cliente?.email || 'Sin correo'}${clientTel}`);
+    
+    document.getElementById('md-cliente').innerText = clientName;
+    document.getElementById('md-email').innerText = clientEmail;
+    
+    const badge = document.getElementById('md-estado-badge');
+    badge.innerText = p.estado.toUpperCase();
+    badge.style.background = p.estado === 'pendiente' ? '#FEEBC8' : (p.estado === 'esperando_pago' ? '#FED7D7' : (p.estado === 'confirmado' ? '#C6F6D5' : '#BEE3F8'));
+    badge.style.color = p.estado === 'pendiente' ? '#DD6B20' : (p.estado === 'esperando_pago' ? '#E53E3E' : (p.estado === 'confirmado' ? '#2F855A' : '#2B6CB0'));
+
+    const det = (p.detalle_pedido && p.detalle_pedido.length > 0) ? p.detalle_pedido[0] : null;
+    document.getElementById('md-producto').innerText = det?.producto_variantes?.productos?.nombre || 'Orden Personalizada';
+    document.getElementById('md-prod-img').src = det?.producto_variantes?.productos?.imagen_url || 'img/luxury_pastries.png';
+    
+    // Parsear Notas y buscar Imágenes de Inspiración
+    let notasBrutas = det?.observaciones_cliente || 'Sin notas';
+    let urlsInspiracion = [];
+    if (notasBrutas.includes('[IMG_REF]')) {
+        let parts = notasBrutas.split('[IMG_REF]');
+        notasBrutas = parts[0].trim();
+        urlsInspiracion = parts.slice(1).map(u => u.trim()).filter(u => u);
+    }
+    document.getElementById('md-notas').innerText = notasBrutas;
+
+    const boxInspiracion = document.getElementById('md-inspiracion-box');
+    const imgsInspiracionContainer = document.getElementById('md-inspiracion-imgs');
+    if (urlsInspiracion.length > 0) {
+        boxInspiracion.style.display = 'block';
+        imgsInspiracionContainer.innerHTML = urlsInspiracion.map(url => `
+            <a href="${url}" target="_blank">
+                <img src="${url}" style="width:100px; height:100px; object-fit:cover; border-radius:8px; border:2px solid var(--gold-primary);">
+            </a>
+        `).join('');
+    } else {
+        boxInspiracion.style.display = 'none';
+        imgsInspiracionContainer.innerHTML = '';
+    }
+
+    const isEditable = p.estado === 'pendiente' || p.estado === 'esperando_pago';
+    
+    const ajusteBox = document.getElementById('md-ajuste-financiero-box');
+    if (isEditable) {
+        ajusteBox.style.display = 'block';
+        const totalInput = document.getElementById('md-total');
+        totalInput.value = p.total || 0;
+        totalInput.disabled = false;
+        
+        const motivoInput = document.getElementById('md-motivo');
+        motivoInput.value = p.observaciones || '';
+        motivoInput.disabled = false;
+    } else {
+        ajusteBox.style.display = 'none';
+    }
+    
+    document.getElementById('md-anticipo-info').innerText = p.anticipo > 0 ? `Anticipo Pagado: $${p.anticipo} (Resta: $${(p.total - p.anticipo)})` : 'Anticipo Pagado: $0.00';
+
+    // Manejar pagos (Transferencia)
+    const comprobanteBox = document.getElementById('md-comprobante-box');
+    const comprobanteLink = document.getElementById('md-comprobante-link');
+    
+    if(p.pagos && p.pagos.length > 0) {
+        // Buscar el último pago de transferencia
+        const transf = p.pagos.slice().reverse().find(pg => pg.metodo_pago === 'transferencia' && pg.comprobante_url);
+        if(transf) {
+            comprobanteBox.style.display = 'block';
+            comprobanteLink.href = transf.comprobante_url;
+        } else {
+            comprobanteBox.style.display = 'none';
+        }
+    } else {
+        comprobanteBox.style.display = 'none';
+    }
+
+    // Acciones Dinámicas
+    const actContainer = document.getElementById('md-actions');
+    actContainer.innerHTML = '';
+    
+    if(p.estado === 'pendiente') {
+        actContainer.innerHTML = `
+            <button class="btn btn-gold" style="flex:1;" onclick="cambiarEstadoDesdeModal(${p.id_pedido}, 'esperando_pago')">Aprobar y Pedir Anticipo</button>
+            <button class="btn btn-black" style="flex:1;" onclick="guardarAjustePrecio()">Guardar Ajuste</button>
+        `;
+    } else if (p.estado === 'esperando_pago') {
+        actContainer.innerHTML = `
+            <button class="btn btn-gold" style="flex:1; font-size:0.8rem;" onclick="cobrarFisicoModal('${p.folio}', ${p.total}, ${p.anticipo || 0}, ${p.id_pedido})"><i class="fas fa-money-bill-wave"></i> Cobrar Físico</button>
+            <button class="btn" style="flex:1; font-size:0.8rem; background:#EEE; color:#000; border:none;" onclick="guardarAjustePrecio()">Guardar Ajuste</button>
+            <button class="btn btn-black" style="flex:1; font-size:0.8rem;" onclick="cambiarEstadoDesdeModal(${p.id_pedido}, 'confirmado')">A Producción</button>
+        `;
+    } else if (p.estado === 'confirmado') {
+        actContainer.innerHTML = `<button class="btn btn-black" style="flex:1;" onclick="cambiarEstadoDesdeModal(${p.id_pedido}, 'entregado')">Marcar como Entregado</button>`;
+    } else {
+        actContainer.innerHTML = `<div style="text-align:center; width:100%; color:var(--pos-gray);">Pedido cerrado. No hay acciones disponibles.</div>`;
+    }
+
+    document.getElementById('modalDetallePedido').style.display = 'flex';
+};
+
+window.cambiarEstadoDesdeModal = async function(id, nuevoEstado) {
+    document.getElementById('modalDetallePedido').style.display = 'none';
+    await window.cambiarEstadoPedido(id, nuevoEstado);
+};
+
+window.cobrarFisicoModal = async function(folio, total, anticipoActual, id_pedido) {
+    document.getElementById('modalDetallePedido').style.display = 'none';
+    await window.abrirCobroAnticipo(folio, total, anticipoActual, id_pedido);
+};
+
+window.guardarAjustePrecio = async function() {
+    const id_pedido = window.currentDetallePedidoId;
+    if(!id_pedido) return;
+
+    const p = window.pedidosGlobal.find(x => x.id_pedido === id_pedido);
+    const nuevoTotal = parseFloat(document.getElementById('md-total').value);
+    const nuevoMotivo = document.getElementById('md-motivo').value;
+
+    if(isNaN(nuevoTotal) || nuevoTotal < 0) return alert("Precio inválido");
+
+    if(nuevoTotal !== parseFloat(p.total) && nuevoMotivo.trim() === '') {
+        return alert("Debes ingresar un Motivo del Ajuste para cambiar el precio.");
+    }
+
+    try {
+        const {error} = await window.DB.from('pedidos')
+            .update({
+                total: nuevoTotal,
+                observaciones: nuevoMotivo
+            })
+            .eq('id_pedido', id_pedido);
+            
+        if(error) throw error;
+        
+        alert("¡Ajuste Financiero guardado con éxito!");
+        await window.initPedidos(); // Recargar datos
+        window.abrirDetallesPedido(id_pedido); // Refrescar modal con nuevos datos
+    } catch(err) {
+        console.error(err);
+        alert("Error guardando ajuste: " + err.message);
     }
 };

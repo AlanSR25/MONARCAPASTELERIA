@@ -927,5 +927,78 @@
             loadPosProducts();
         });
     </script>
+    
+    <!-- MODAL DETALLES DEL PEDIDO (ESPECIALES) -->
+    <div id="modalDetallePedido" class="modal-overlay">
+        <div class="modal-box" style="max-width: 800px; width: 95%;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #EEE; padding-bottom:10px; margin-bottom:20px;">
+                <h3 style="margin:0; font-family:var(--font-heading); font-size:1.5rem; color:var(--pos-primary);">👑 Detalles <span id="md-folio" style="color:var(--pos-text);"></span></h3>
+                <button onclick="document.getElementById('modalDetallePedido').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--pos-gray);">&times;</button>
+            </div>
+            <div class="modal-body" style="text-align:left;">
+                
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px; background:#F7FAFC; padding:15px; border-radius:8px;">
+                    <div>
+                        <p style="margin:0; font-weight:bold;">Cliente: <span id="md-cliente" style="font-weight:normal;"></span></p>
+                        <p style="margin:5px 0 0; color:var(--pos-gray);">Contacto: <span id="md-email"></span></p>
+                    </div>
+                    <div style="text-align:right;">
+                        <span id="md-estado-badge" style="padding: 4px 10px; border-radius:20px; font-weight:bold; font-size:0.8rem;"></span>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:15px; margin-bottom:20px;">
+                    <img id="md-prod-img" src="" alt="Producto" style="width:120px; height:120px; object-fit:cover; border-radius:8px; border:1px solid #E2E8F0;">
+                    <div style="flex-grow:1;">
+                        <h4 style="margin:0 0 5px;">Descripción del Producto</h4>
+                        <p id="md-producto" style="margin:0; font-size:1.1rem; font-weight:bold;"></p>
+                        <div style="background:#FFF3E0; padding:10px; border-radius:6px; margin-top:10px; border-left:3px solid var(--gold-primary);">
+                            <strong>Notas del Cliente:</strong><br>
+                            <span id="md-notas" style="font-size:0.9rem;"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Imágenes de Inspiración del Cliente -->
+                <div id="md-inspiracion-box" style="margin-bottom:20px; display:none; background:#F7FAFC; padding:15px; border-radius:8px; border:1px dashed #CCC;">
+                    <h4 style="margin:0 0 10px; color:var(--pos-primary);">🎨 Imágenes de Inspiración del Cliente</h4>
+                    <div id="md-inspiracion-imgs" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+                </div>
+
+                <!-- Modificación de Precio -->
+                <div id="md-ajuste-financiero-box" style="border:1px solid #E2E8F0; padding:15px; border-radius:8px; margin-bottom:20px;">
+                    <h4 style="margin:0 0 10px;">Ajuste Financiero</h4>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.85rem; color:var(--pos-gray);">Total del Pedido ($)</label>
+                            <input type="number" id="md-total" class="pos-input" style="width:100%;">
+                        </div>
+                        <div style="flex:2;">
+                            <label style="font-size:0.85rem; color:var(--pos-gray);">Motivo del Ajuste (Obligatorio si cambia el precio)</label>
+                            <input type="text" id="md-motivo" class="pos-input" style="width:100%;" placeholder="Ej. Cargo por rosas extras">
+                        </div>
+                        <div>
+                            <button class="btn btn-black" style="margin-top:20px;" onclick="guardarAjustePrecio()">Guardar Precio</button>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px; font-size:0.9rem; color:#2E7D32; font-weight:bold;" id="md-anticipo-info">
+                        Anticipo Pagado: $0.00
+                    </div>
+                </div>
+
+                <!-- Comprobante de Transferencia -->
+                <div id="md-comprobante-box" style="margin-bottom:20px; display:none; background:#EDF2F7; padding:15px; border-radius:8px; text-align:center;">
+                    <p style="margin:0 0 10px; font-weight:bold;">📸 Comprobante de Transferencia Subido</p>
+                    <a id="md-comprobante-link" href="#" target="_blank" class="btn" style="background:#FFF; color:#1976D2; border:1px solid #1976D2;"><i class="fas fa-external-link-alt"></i> Ver Imagen Completa</a>
+                </div>
+
+                <!-- Botones de Acción Mágicos -->
+                <div id="md-actions" style="display:flex; gap:10px; margin-top:20px;">
+                    <!-- Se inyectan dinámicamente desde JS -->
+                </div>
+
+            </div>
+        </div>
+    </div>
 </body>
 </html>

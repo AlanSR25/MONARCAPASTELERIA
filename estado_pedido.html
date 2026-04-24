@@ -214,7 +214,8 @@
                                 <i class="fas fa-university payment-icon"></i>
                                 <h4>Transferencia</h4>
                                 <p style="font-size:0.85rem; color:var(--color-text-light);">Sube tu comprobante bancario para validación.</p>
-                                <button class="btn" style="background:white; border:2px solid var(--color-primary); color:var(--color-primary); width:100%; margin-top:10px;" onclick="alert('Funcionalidad de transferencia en desarrollo.')">Subir Comprobante</button>
+                                <input type="file" id="input-comprobante" style="display:none" accept="image/*" onchange="subirComprobante('${p.id_pedido}', ${pagoFaltanteMinimo > 0 ? pagoFaltanteMinimo : faltante})">
+                                <button class="btn" id="btn-subir-comprobante" style="background:white; border:2px solid var(--color-primary); color:var(--color-primary); width:100%; margin-top:10px;" onclick="document.getElementById('input-comprobante').click()">Subir Comprobante</button>
                             </div>
 
                         </div>
@@ -265,6 +266,55 @@
                 alert("Error al iniciar el pago: " + err.message);
                 event.target.innerText = "Pagar de nuevo";
                 event.target.disabled = false;
+            }
+        };
+
+        // ==========================================
+        // SUBIDA DE COMPROBANTES DE TRANSFERENCIA
+        // ==========================================
+        window.subirComprobante = async function(id_pedido, monto) {
+            const input = document.getElementById('input-comprobante');
+            const file = input.files[0];
+            if(!file) return;
+
+            const btn = document.getElementById('btn-subir-comprobante');
+            const oldText = btn.innerText;
+            btn.innerText = "Subiendo...";
+            btn.disabled = true;
+
+            try {
+                // Generar nombre único
+                const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+                const filePath = "comprobantes/" + Date.now() + "_" + safeName;
+                
+                // Subir al bucket
+                const { error: uploadError } = await window.DB.storage.from('monarca-assets').upload(filePath, file, { cacheControl: '3600', upsert: false });
+                if(uploadError) throw uploadError;
+
+                // Obtener URL pública
+                const { data: pubData } = window.DB.storage.from('monarca-assets').getPublicUrl(filePath);
+                const publicUrl = pubData.publicUrl;
+
+                // Insertar en tabla pagos
+                const { error: dbError } = await window.DB.from('pagos').insert({
+                    id_pedido: id_pedido,
+                    metodo_pago: 'transferencia',
+                    estado_pago: 'pendiente',
+                    monto: monto,
+                    comprobante_url: publicUrl
+                });
+
+                if(dbError) throw dbError;
+
+                alert("¡Comprobante enviado con éxito! Nuestro equipo lo validará en breve.");
+                window.location.reload();
+
+            } catch (err) {
+                console.error("Error subiendo comprobante:", err);
+                alert("Error al subir: " + err.message);
+                btn.innerText = oldText;
+                btn.disabled = false;
+                input.value = '';
             }
         };
     </script>

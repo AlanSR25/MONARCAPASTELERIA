@@ -993,8 +993,13 @@
                 </div>
 
                 <!-- Botones de Acción Mágicos -->
-                <div id="md-actions" style="display:flex; gap:10px; margin-top:20px;">
-                    <!-- Se inyectan dinámicamente desde JS -->
+                <div style="display:flex; gap:10px; margin-top:20px; width:100%;">
+                    <div id="md-actions" style="flex:1; display:flex; gap:10px;">
+                        <!-- Se inyectan dinámicamente desde JS -->
+                    </div>
+                    <button id="md-cancel-btn" class="btn" style="background:#E53E3E; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;" onclick="cancelarPedidoModal()" title="Cancelar / Eliminar Pedido">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
 
             </div>

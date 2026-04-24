@@ -1785,10 +1785,12 @@ window.renderPosPedidos = function() {
         const imagenProd = det?.producto_variantes?.productos?.imagen_url || 'img/luxury_pastries.png';
         const notasCli = det?.observaciones_cliente ? det.observaciones_cliente.split('[IMG_REF]')[0].trim() : 'Sin notas';
         
-        const isGuest = !p.id_cliente;
-        let clienteNombre = isGuest ? (p.nombre_invitado || 'Invitado') : (p.perfiles_cliente?.nombre_completo || p.perfiles_cliente?.email || 'Cliente');
-        let clienteEmail = isGuest ? (p.email_invitado || '') : (p.perfiles_cliente?.email || '');
-        let clienteTel = p.perfiles_cliente?.telefono ? ` - 📱 ${p.perfiles_cliente.telefono}` : '';
+        let pInfo = p.perfiles_cliente || {};
+        if (Array.isArray(pInfo)) pInfo = pInfo[0] || {};
+        
+        let clienteNombre = pInfo.nombre_completo || p.nombre_invitado || pInfo.email || p.email_invitado || 'Cliente Nuevo';
+        let clienteEmail = pInfo.email || p.email_invitado || '';
+        let clienteTel = pInfo.telefono ? ` - 📱 ${pInfo.telefono}` : '';
         
         const card = document.createElement('div');
         card.style = "background:#FFF; border:1px solid #E2E8F0; padding:15px; border-radius:8px; margin-bottom:15px; box-shadow:0 2px 4px rgba(0,0,0,0.02); position:relative;";
@@ -1820,7 +1822,7 @@ window.renderPosPedidos = function() {
         
         if (p.estado === 'pendiente' || p.estado === 'esperando_pago') contPendientes.appendChild(card);
         else if (p.estado === 'confirmado') contAprobados.appendChild(card);
-        else contHistorial.appendChild(card);
+        else if (p.estado === 'entregado' || p.estado === 'completado') contHistorial.appendChild(card);
     });
 
     if(renderCount === 0) {
@@ -1906,10 +1908,12 @@ window.abrirDetallesPedido = function(id_pedido) {
     document.getElementById('md-folio').innerText = p.folio;
     
     // Usuarios robusto
-    const isGuest = !p.id_cliente;
-    const clientName = isGuest ? (p.nombre_invitado || 'Invitado') : (p.perfiles_cliente?.nombre_completo || p.perfiles_cliente?.email || 'Cliente sin nombre registrado');
-    const clientTel = p.perfiles_cliente?.telefono ? ` 📱 ${p.perfiles_cliente.telefono}` : ' 📱 Sin teléfono';
-    const clientEmail = isGuest ? (p.email_invitado || '📧 Sin correo') : (`📧 ${p.perfiles_cliente?.email || 'Sin correo'}${clientTel}`);
+    let pInfo = p.perfiles_cliente || {};
+    if (Array.isArray(pInfo)) pInfo = pInfo[0] || {};
+
+    const clientName = pInfo.nombre_completo || p.nombre_invitado || pInfo.email || p.email_invitado || 'Cliente Nuevo';
+    const clientTel = pInfo.telefono ? ` 📱 ${pInfo.telefono}` : '';
+    const clientEmail = (pInfo.email || p.email_invitado) ? `📧 ${pInfo.email || p.email_invitado}${clientTel}` : `📧 Sin correo${clientTel}`;
     
     document.getElementById('md-cliente').innerText = clientName;
     document.getElementById('md-email').innerText = clientEmail;
@@ -2003,7 +2007,34 @@ window.abrirDetallesPedido = function(id_pedido) {
         actContainer.innerHTML = `<div style="text-align:center; width:100%; color:var(--pos-gray);">Pedido cerrado. No hay acciones disponibles.</div>`;
     }
 
+    const cancelBtn = document.getElementById('md-cancel-btn');
+    if (cancelBtn) {
+        cancelBtn.style.display = (p.estado !== 'entregado' && p.estado !== 'cancelado') ? 'block' : 'none';
+    }
+
     document.getElementById('modalDetallePedido').style.display = 'flex';
+}
+
+window.cancelarPedidoModal = async function() {
+    if(!window.currentDetallePedidoId) return;
+    const confirmacion = confirm("⚠️ ¿Estás seguro de que deseas CANCELAR / ELIMINAR este pedido?\n\nEsta acción lo ocultará de la bandeja principal y marcará su estado como 'cancelado'.");
+    if(!confirmacion) return;
+    
+    try {
+        const { error } = await window.DB.from('pedidos')
+            .update({ estado: 'cancelado' })
+            .eq('id_pedido', window.currentDetallePedidoId);
+            
+        if(error) throw error;
+        
+        document.getElementById('modalDetallePedido').style.display = 'none';
+        window.currentDetallePedidoId = null;
+        await window.initPedidos(); // Recargar pedidos
+        alert("Pedido movido a cancelados / ocultos.");
+    } catch(err) {
+        console.error(err);
+        alert("Error al cancelar el pedido: " + err.message);
+    }
 };
 
 window.cambiarEstadoDesdeModal = async function(id, nuevoEstado) {

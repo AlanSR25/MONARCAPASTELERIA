@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monarca Pastelería | Sabor de Realeza</title>
+    <meta name="description"
+        content="Experimenta la exclusividad y los sabores de la realeza con Monarca Pastelería. Diseños únicos, ingredientes premium y un toque de majestuosidad en cada postre.">
+
+    <!-- Preconnect for fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Fonts: Cinzel for elegance (Monarchy theme), Montserrat for clean modern text -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Initial Loading Screen with Logo Animation -->
+    <div class="loader">
+        <div class="loader-logo">
+            <img src="img/logo.png" alt="Cargando Monarca Pastelería" class="spinning-crown">
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <monarca-navbar></monarca-navbar>
+
+    <main>
+        <!-- Full-screen Hero Section Carousel -->
+        <section class="hero glass-effect" id="hero-carousel">
+            <div class="carousel-inner">
+                <!-- Slide 1 -->
+                <div class="carousel-slide active">
+                    <div class="hero-bg" style="background-image: url('img/hero_cake.png');"></div>
+                    <!-- Overlay dark for text contrast -->
+                    <div class="hero-overlay"></div>
+                    <div class="hero-content">
+                        <span class="subtitle">Exclusividad en cada detalle</span>
+                        <h1 class="title">El Sabor de la Realeza</h1>
+                        <p class="description">Postres meticulosamente diseñados para paladares que exigen la
+                            excelencia. Un tributo al buen gusto y a la majestuosidad de la alta repostería.</p>
+                        <div class="hero-buttons">
+                            <a href="coleccion.html" class="btn btn-gold-filled">Descubrir Colección</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="carousel-slide">
+                    <div class="hero-bg" style="background-image: url('img/luxury_pastries.png');"></div>
+                    <div class="hero-overlay"></div>
+                    <div class="hero-content">
+                        <span class="subtitle">Arte Transformado en Sabor</span>
+                        <h1 class="title">Alta Repostería Parisina</h1>
+                        <p class="description">Cada pieza es cuidadosamente elaborada a mano para convertirse en la joya
+                            central de tu celebración más importante.</p>
+                        <div class="hero-buttons">
+                            <a href="crear_pedido.html" class="btn btn-outline" style="border-color: white; color: white;">Crear
+                                Diseño Propio</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carousel Controls -->
+            <button class="carousel-control prev">&#10094;</button>
+            <button class="carousel-control next">&#10095;</button>
+            <div class="carousel-indicators">
+                <span class="dot active" data-slide="0"></span>
+                <span class="dot" data-slide="1"></span>
+            </div>
+        </section>
+
+        <!-- Collection Section (Now comes FIRST) -->
+        <section id="coleccion" class="collection">
+            <div class="section-header reveal fade-up">
+                <span class="accent-text">Obras de Arte</span>
+                <h2>La Colección Real</h2>
+            </div>
+
+            <div id="productos-galeria" class="cards-container">
+                 <div style="text-align: center; padding: 2rem; grid-column: 1 / -1;">Cargando colección exclusiva...</div>
+            </div>
+
+            <div class="collection-footer reveal fade-up">
+                <a href="crear_pedido.html" class="btn btn-outline" style="margin-top: 3rem;">Ver Catálogo Completo</a>
+            </div>
+        </section>
+
+        <!-- About Experience Section (Now comes LAST before CTA) -->
+        <section id="experiencia" class="about">
+            <div class="about-grid">
+                <div class="about-text reveal fade-left">
+                    <div class="crown-icon">👑</div>
+                    <h2>Ingredientes Premium,<br>Toque Monárquico</h2>
+                    <p>En Monarca, creemos que cada creación debe ser una obra de arte digna de reyes. Utilizamos los
+                        ingredientes más exclusivos del mundo: chocolate belga oscuro de origen único, vainilla pura de
+                        Madagascar y sutiles toques de oro comestible de 24 quilates.</p>
+                    <p>Nuestra pastelería no es solo un placer al paladar, es un símbolo de estatus, elegancia y de la
+                        exclusividad que mereces vivir en tus mejores momentos.</p>
+                </div>
+                <div class="about-image-container reveal fade-right">
+                    <div class="gold-frame">
+                        <img src="img/luxury_pastries.png" alt="Colección Exclusiva" class="about-image">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Footer Section (Modified to Agendar Cita) -->
+        <section id="cta" class="cta-section reveal">
+            <div class="cta-content">
+                <h2>¿No encuentras lo que buscas?</h2>
+                <p>Sabemos que ciertas ocasiones requieren algo completamente único. Nuestros maestros pasteleros pueden
+                    diseñar y crear esa pieza que imaginas, exclusivamente para ti.</p>
+                <a href="crear_pedido.html" class="btn btn-black btn-large">Agendar Cita Privada</a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <monarca-footer></monarca-footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
+    <script src="tienda.js"></script>
+    <script src="components.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

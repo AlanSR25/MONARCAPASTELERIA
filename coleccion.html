@@ -1,0 +1,88 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monarca Pastelería | Colección Real</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .catalog-header {
+            text-align: center;
+            margin-bottom: 4rem;
+            padding-top: 2rem;
+        }
+        
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: 1px solid #DDDDDD;
+            padding: 0.5rem 1.5rem;
+            font-family: var(--font-body);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            border-radius: 20px;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--black-accent);
+            color: var(--white-accent);
+            border-color: var(--black-accent);
+        }
+    </style>
+</head>
+
+<body style="background-color: var(--bg-alt);">
+
+    <!-- Navigation Bar -->
+    <monarca-navbar></monarca-navbar>
+
+    <main class="collection-page" style="padding: 140px 2rem 4rem; max-width: 1200px; margin: 0 auto;">
+        
+        <!-- Header -->
+        <div class="catalog-header reveal active">
+            <span class="accent-text" style="color: var(--gold-primary); letter-spacing: 5px; text-transform: uppercase; display: block; margin-bottom: 1rem; font-size: 0.9rem;">El Menú</span>
+            <h1 style="font-family: var(--font-heading); font-size: 3.5rem; color: var(--black-accent);">La Colección Real</h1>
+            <p style="color: var(--text-muted); max-width: 600px; margin: 1.5rem auto 0; font-size: 1.1rem;">Explora nuestra galería de sabores premium, donde cada creación, receta y diseño están elaborados meticulosamente para ser una obra maestra.</p>
+        </div>
+
+        <!-- Filters (Mock) -->
+        <div class="filters reveal active fade-up">
+            <button class="filter-btn active">Todas las Obras</button>
+            <button class="filter-btn">Pasteles de Boda</button>
+            <button class="filter-btn">Macarons & Petite</button>
+            <button class="filter-btn">Chocolatería</button>
+        </div>
+
+        <!-- Catalog Grid layout reused from CSS .cards-container -->
+        <div id="galeria-completa" class="cards-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 3rem;">
+            <div style="text-align: center; padding: 4rem; grid-column: 1 / -1;">Cargando colección exclusiva...</div>
+        </div>
+        
+    </main>
+
+    <!-- Footer -->
+    <monarca-footer></monarca-footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
+    <script src="tienda.js"></script>
+    <script src="components.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

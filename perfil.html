@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monarca Pastelería | Mi Perfil</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body style="background-color: var(--bg-alt);">
+
+    <!-- Navigation Bar -->
+    <monarca-navbar></monarca-navbar>
+
+    <main class="profile-container" style="padding: 140px 2rem 4rem; max-width: 1200px; margin: 0 auto;">
+        
+        <div class="section-header reveal active" style="margin-bottom: 2rem;">
+            <h2 style="font-size: 2.5rem;">Couture Panel</h2>
+        </div>
+
+        <div class="profile-grid">
+            
+            <!-- Sidebar: User Info -->
+            <aside class="profile-sidebar reveal active fade-right">
+                <div class="auth-box" style="padding: 2rem;">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        <div id="view-corona" class="profile-avatar" style="font-size: 3.5rem; transition: all 0.5s; text-shadow: 0 0 15px rgba(212,175,55,0.2);">👑</div>
+                        <h3 id="view-nombre" style="margin-top: 1rem; font-family: var(--font-heading); color: var(--black-accent);">Cargando...</h3>
+                        <p id="view-rango" style="color: var(--gold-primary); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-top: 0.3rem;">INVITADO REAL</p>
+                        
+                        <div class="loyalty-bar" style="margin-top: 1.5rem; text-align: left; background: #FFF; padding: 1rem; border-radius: 8px; border: 1px solid #E5E5E5; box-shadow: 0 5px 15px rgba(0,0,0,0.03);">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-muted); font-weight: 500;">
+                                <span id="loyalty-pts">0 Pts Monarca</span>
+                                <span id="loyalty-next">Siguiente Rango: 100 Pts</span>
+                            </div>
+                            <div style="width: 100%; background: #EEEEEE; height: 8px; border-radius: 4px; overflow: hidden;">
+                                <div id="loyalty-progress" style="width: 0%; height: 100%; background: linear-gradient(90deg, #B5942B, #D4AF37); transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form class="auth-form">
+                        <div class="form-group">
+                            <label>Nombre Completo</label>
+                            <input type="text" id="perfil-nombre" placeholder="Cargando...">
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <input type="text" id="perfil-telefono" placeholder="Cargando...">
+                        </div>
+                        <div class="form-group">
+                            <label>Dirección de Envío Predeterminada</label>
+                            <input type="text" id="perfil-direccion" placeholder="Cargando...">
+                        </div>
+                        <button type="button" onclick="guardarPerfilEnDB()" class="btn btn-black btn-full">Actualizar Datos</button>
+                        
+                        <div style="margin-top: 1.5rem; text-align: center; border-top: 1px solid #EEE; padding-top: 1rem;">
+                            <button type="button" onclick="window.logoutUser()" style="background: none; border: none; color: #d9534f; font-family: var(--font-body); font-weight: 500; text-decoration: underline; cursor: pointer;">Cerrar Sesión Segura</button>
+                        </div>
+                    </form>
+                </div>
+            </aside>
+
+            <!-- Main Content: Orders -->
+            <section class="profile-main reveal active fade-left">
+                <div class="auth-box" style="padding: 2rem; max-width: 100%;">
+                    <h3 style="font-family: var(--font-heading); font-size: 1.5rem; border-bottom: 1px solid var(--gold-primary); padding-bottom: 1rem; margin-bottom: 2rem;">Pedidos Activos</h3>
+                    
+                    <div id="pedidos-activos">
+                        <p style="text-align: center; color: var(--text-muted); font-style: italic;">No tienes pedidos activos actualmente.</p>
+                    </div>
+                </div>
+
+                <div class="auth-box" style="padding: 2rem; max-width: 100%; margin-top: 2rem;">
+                    <h3 style="font-family: var(--font-heading); font-size: 1.5rem; border-bottom: 1px solid #DDDDDD; padding-bottom: 1rem; margin-bottom: 2rem; color: #888;">Historial de Pedidos</h3>
+                    
+                    <p style="text-align: center; color: var(--text-muted); font-style: italic;">No tienes pedidos anteriores.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <monarca-footer></monarca-footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
+    <script src="tienda.js"></script>
+    <script src="components.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

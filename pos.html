@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monarca OS | Punto de Venta</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        :root {
+            --pos-bg: #F5F7FA;
+            --pos-surface: #FFFFFF;
+            --pos-text: #2D3748;
+            --pos-border: #E2E8F0;
+            --pos-primary: #D4AF37;
+            --pos-gray: #718096;
+        }
+
+        body.pos-app {
+            background-color: var(--pos-bg);
+            color: var(--pos-text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* 1. SIDEBAR (Navegación Admin) */
+        .pos-sidebar {
+            width: 250px;
+            background-color: #1A202C;
+            color: #FFF;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #000;
+        }
+        .pos-brand {
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid #2D3748;
+        }
+        .pos-brand h1 {
+            font-family: var(--font-heading);
+            color: var(--gold-primary);
+            font-size: 1.5rem;
+            margin: 0;
+        }
+        .pos-nav {
+            list-style: none;
+            padding: 1rem 0;
+            margin: 0;
+            flex-grow: 1;
+        }
+        .pos-nav li {
+            padding: 1rem 2rem;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #A0AEC0;
+            transition: all 0.2s;
+        }
+        .pos-nav li:hover { background-color: #2D3748; color: #FFF; }
+        .pos-nav li.active {
+            background-color: var(--gold-primary);
+            color: #000;
+            border-right: 4px solid #FFF;
+        }
+        .pos-user {
+            padding: 1.5rem;
+            border-top: 1px solid #2D3748;
+            text-align: center;
+        }
+
+        /* 2. MAIN CENTER (Catálogo) */
+        .pos-main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--pos-bg);
+            padding: 20px;
+            overflow: hidden;
+        }
+        .pos-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        /* Categories Scroll Bar */
+        .pos-categories {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .cat-btn {
+            background: var(--pos-surface);
+            border: 1px solid var(--pos-border);
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+            color: var(--pos-gray);
+            transition: all 0.2s;
+        }
+        .cat-btn.active, .cat-btn:hover {
+            background: var(--black-accent);
+            color: #FFF;
+            border-color: var(--black-accent);
+        }
+
+        /* Products Grid */
+        .pos-products {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            padding-right: 10px;
+        }
+        .product-card {
+            background: var(--pos-surface);
+            border: 1px solid var(--pos-border);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            display: flex;
+            flex-direction: column;
+        }
+        .product-card:active { transform: scale(0.97); }
+        .product-card img { width: 100%; height: 140px; object-fit: cover; }
+        .product-card-body { padding: 12px; flex-grow: 1; display:flex; flex-direction:column; justify-content:space-between; }
+        .product-card-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 5px; color: var(--pos-text); }
+        .product-card-price { color: var(--gold-primary); font-weight: 700; font-size: 1.1rem; }
+
+        /* 3. RIGHT SIDEBAR (Carrito) */
+        .pos-cart-panel {
+            width: 350px;
+            background: var(--pos-surface);
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid var(--pos-border);
+            box-shadow: -4px 0 15px rgba(0,0,0,0.02);
+            z-index: 10;
+        }
+        .cart-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--pos-border);
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        .cart-items {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        
+        .cart-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            align-items: center;
+            border-bottom: 1px dashed var(--pos-border);
+            padding: 10px 0;
+            font-size: 0.9rem;
+        }
+        .item-qty { text-align: center; font-weight: bold; }
+        .item-price { text-align: right; color: var(--gold-primary); font-weight: 600; }
+        .item-remove { cursor:pointer; color: #E53E3E; margin-left: 10px; font-weight: bold; }
+
+        .cart-footer {
+            padding: 20px;
+            background: #FAFAFA;
+            border-top: 1px solid var(--pos-border);
+        }
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            color: var(--pos-gray);
+        }
+        .totals-row.grand-total {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--pos-text);
+            border-top: 2px solid var(--pos-border);
+            padding-top: 10px;
+            margin-bottom: 20px;
+        }
+        .anticipo-control {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px; background: #EEF2F6; border-radius: 8px;
+        }
+        .anticipo-control input { width: 80px; text-align: right; border: 1px solid #CCC; padding: 5px; border-radius:4px; font-weight:bold; }
+        
+        .btn-pay {
+            width: 100%;
+            background: var(--gold-primary);
+            color: #000;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-pay:hover { background: #B5942B; }
+        .btn-pay:disabled { background: #CCC; cursor:not-allowed; }
+
+        /* 4. MODALS */
+        .modal-overlay {
+            position: fixed; top:0; left:0; width:100vw; height:100vh;
+            background: rgba(0,0,0,0.6);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        .modal-box {
+            background: #FFF; padding: 2rem; border-radius: 12px; width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown { from{transform:translateY(-20px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+        
+        .pay-method-btn {
+            width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 8px;
+            border: 2px solid var(--pos-border); background: #FFF;
+            font-size: 1.1rem; font-weight: 600; cursor: pointer; color: var(--pos-text);
+        }
+        .pay-method-btn:hover { border-color: var(--black-accent); }
+    </style>
+</head>
+<body class="pos-app">
+
+    <!-- SIDEBAR -->
+    <aside class="pos-sidebar">
+        <div class="pos-brand">
+            <h1>MONARCA</h1>
+            <p style="font-size:0.8rem; margin-top:5px; color:#A0AEC0;">PUNTO DE VENTA</p>
+        </div>
+        <ul class="pos-nav">
+            <li class="active" onclick="switchErpModule('ventas', this)">🧾 Ventas POS</li>
+            <li onclick="switchErpModule('pedidos', this)">👑 Pedidos Especiales</li>
+            <li onclick="switchErpModule('produccion', this)">🏭 Producción</li>
+            <li onclick="switchErpModule('catalogo', this)">🖼️ Catálogo</li>
+            <li onclick="switchErpModule('recetas', this)">📜 Recetas</li>
+            <li onclick="switchErpModule('inventario', this)">📦 Inventario</li>
+            <li onclick="switchErpModule('finanzas', this)">📊 Finanzas</li>
+            <li onclick="switchErpModule('usuarios', this)">👥 Usuarios</li>
+        </ul>
+        <div class="pos-user">
+            <p id="pos-admin-name" style="font-weight:bold; margin-bottom:10px;">Cargando...</p>
+            <button onclick="window.logoutUser()" style="width:100%; padding:8px; background:transparent; color:#E53E3E; border:1px solid #E53E3E; border-radius:5px; cursor:pointer;">Cerrar Sesión</button>
+        </div>
+    </aside>
+
+    <!-- CONTENEDOR MÁSTER ERP -->
+    <div id="erp-modules-container" style="flex-grow:1; display:flex; height: 100%;">
+        
+        <!-- MODULE 1: VENTAS (Activo) -->
+        <div class="erp-module active" id="module-ventas" style="flex-grow:1; display:flex; width:100%;">
+            <!-- MAIN CENTER (Products) -->
+            <main class="pos-main">
+                <div class="pos-header">
+                    <h2>Módulo de Ventas</h2>
+                    <div style="background:var(--pos-surface); padding:8px 15px; border-radius:20px; font-weight:bold; border:1px solid var(--pos-border);">📍 Matriz Central</div>
+                </div>
+
+                <!-- Categories Filters -->
+                <div class="pos-categories" id="pos-categories-container">
+                    <button class="cat-btn active" onclick="filterCategory(null)">🚀 Todos</button>
+                    <!-- Dinámicamente poblado por JS -->
+                </div>
+
+                <!-- Products Area -->
+                <div class="pos-products" id="pos-products-grid">
+                    <p style="grid-column: 1/-1; text-align:center; padding: 2rem;">Sincronizando con Supabase...</p>
+                </div>
+            </main>
+
+            <!-- RIGHT SIDEBAR (Cart/Checkout) -->
+            <aside class="pos-cart-panel">
+                <div class="cart-header">
+                    <span>Ticket Actual</span>
+                    <span id="cart-item-count" style="background:#E2E8F0; padding:2px 8px; border-radius:12px; font-size:0.8rem;">0</span>
+                </div>
+
+                <div class="cart-items" id="pos-cart-body">
+                    <div style="text-align:center; color:var(--pos-gray); margin-top:2rem;">El ticket está vacío.</div>
+                </div>
+
+                <div class="cart-footer">
+                    <div class="totals-row grand-total" style="border-top: none; padding-top: 0; margin-bottom: 20px;">
+                        <span>Total a Cobrar</span>
+                        <span id="pos-subtotal" style="color:var(--pos-primary);">$0.00</span>
+                    </div>
+
+                    <button class="btn-pay" id="btn-checkout" onclick="openPaymentModal()" disabled>COBRAR</button>
+                </div>
+            </aside>
+        </div>
+
+        <!-- MODULE X: PEDIDOS (Órdenes Web / POS) -->
+        <main class="erp-module" id="module-pedidos" style="display:none; flex-grow:1; padding:20px; background:var(--pos-bg); flex-direction:column; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>👑 Central de Pedidos (Couture & Web)</h2>
+                <div>
+                    <button class="btn btn-gold" onclick="window.open('crear_pedido.html', '_blank')">+ Nuevo Pedido (Asistido)</button>
+                    <button class="btn btn-black" onclick="initPedidos()">↻ Actualizar Bandeja</button>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:20px; flex-grow:1;">
+                
+                <!-- CALENDARIO LATERAL -->
+                <div style="width: 320px; background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-border); box-shadow: 0 4px 6px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <button class="btn" style="padding:5px 10px; background:#EEE; border:none; border-radius:6px; cursor:pointer;" onclick="changeMonth(-1)">&#8592;</button>
+                        <h3 id="cal-month-year" style="margin:0; font-size:1.1rem; text-transform:capitalize;">Mes Año</h3>
+                        <button class="btn" style="padding:5px 10px; background:#EEE; border:none; border-radius:6px; cursor:pointer;" onclick="changeMonth(1)">&#8594;</button>
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns: repeat(7, 1fr); text-align:center; font-weight:bold; font-size:0.8rem; color:var(--pos-gray); margin-bottom:10px;">
+                        <div>D</div><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div>
+                    </div>
+                    
+                    <div id="calendar-grid" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:5px; flex-grow:1;">
+                        <!-- Dias renderizados via JS -->
+                    </div>
+
+                    <button class="btn btn-black" style="margin-top: 15px; width: 100%; padding: 10px; border-radius: 6px;" onclick="window.selectedDateFilter=null; renderCalendar(); renderPosPedidos();">Ver Todos los Pedidos</button>
+                </div>
+
+                <!-- COLUMNAS DE PEDIDOS -->
+                <div style="flex-grow:1; display:flex; gap:20px;">
+                    <div style="background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-border); flex:1; display:flex; flex-direction:column; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                        <h3 style="margin-top:0; border-bottom:1px solid #EEE; padding-bottom:10px; color:#E59E27;">🟡 Bandeja / Pendiente Pago</h3>
+                        <div id="pedidos-pendientes" style="flex-grow:1; overflow-y:auto; padding-right:10px; margin-top:10px;">
+                            <p style="text-align:center; color:var(--pos-gray);">Cargando pedidos de la web...</p>
+                        </div>
+                    </div>
+
+                    <div style="background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-border); flex:1; display:flex; flex-direction:column; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                        <h3 style="margin-top:0; border-bottom:1px solid #EEE; padding-bottom:10px; color:#2E7D32;">🟢 Pagados / Producción</h3>
+                        <div id="pedidos-aprobados" style="flex-grow:1; overflow-y:auto; padding-right:10px; margin-top:10px;">
+                            <p style="text-align:center; color:var(--pos-gray);">Cargando pedidos en proceso...</p>
+                        </div>
+                    </div>
+
+                    <div style="background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-border); flex:1; display:flex; flex-direction:column; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                        <h3 style="margin-top:0; border-bottom:1px solid #EEE; padding-bottom:10px; color:#1976D2;">🔵 Listos / Entregados</h3>
+                        <div id="pedidos-historial" style="flex-grow:1; overflow-y:auto; padding-right:10px; margin-top:10px;">
+                            <p style="text-align:center; color:var(--pos-gray);">Historial de pedidos...</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- MODULE 2: PRODUCCIÓN -->
+        <main class="erp-module" id="module-produccion" style="display:none; flex-grow:1; padding:20px; background:var(--pos-bg); flex-direction:column; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>🏭 Línea de Producción (Ingresos a Stock)</h2>
+            </div>
+            
+            <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                
+                <!-- Formulario de Producción -->
+                <div style="background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-border); flex:1; min-width:300px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                    <h3 style="margin-top:0; border-bottom:1px solid #EEE; padding-bottom:10px;">Nuevo Lote Elaborado</h3>
+                    
+                    <div style="margin-bottom:15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--pos-text); font-size:0.9rem;">Producto Base</label>
+                        <select id="prod-selector" style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC;" onchange="loadVariantesParaProduccion()">
+                            <option value="">Cargando productos...</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom:15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600; color:var(--pos-text); font-size:0.9rem;">Tamaño / Variante</label>
+                        <select id="var-selector" style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC;">
+                            <option value="">Selecciona el producto primero</option>
+                        </select>
+                    </div>
+
+                    <div style="display:flex; gap:10px; margin-bottom:15px;">
+                        <div style="flex:1;">
+                            <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Cantidad (Und)</label>
+                            <input type="number" id="prod-qty" value="1" min="1" style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Responsable</label>
+                            <input type="text" id="prod-resp" disabled style="width:100%; padding:10px; border-radius:6px; border:1px solid #EEE; background:#FAFAFA; box-sizing:border-box;">
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:10px; margin-bottom:20px;">
+                        <div style="flex:1;">
+                            <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Fecha Elaboración</label>
+                            <input type="date" id="prod-fecha" style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Fecha Caducidad</label>
+                            <input type="date" id="prod-caducidad" style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;">
+                        </div>
+                    </div>
+
+                    <button class="btn btn-black" style="width:100%; padding:12px; font-size:1.1rem; border-radius:8px;" onclick="guardarLoteProduccion()">Guardar Lote en Stock</button>
+                </div>
+
+                <!-- Lista de Lotes Producidos Hoy -->
+                <div style="background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-border); flex:2; min-width:400px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
+                    <h3 style="margin-top:0; border-bottom:1px solid #EEE; padding-bottom:10px;">Historial de Producción (Stock Creado)</h3>
+                    
+                    <div style="flex-grow:1; overflow-y:auto;">
+                        <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                            <thead>
+                                <tr style="background:#F7FAFC; text-align:left; color:var(--pos-gray); font-size:0.85rem;">
+                                    <th style="padding:10px; border-bottom:2px solid #E2E8F0;">ID Lote</th>
+                                    <th style="padding:10px; border-bottom:2px solid #E2E8F0;">Producto Terminado</th>
+                                    <th style="padding:10px; border-bottom:2px solid #E2E8F0;">Cantidad</th>
+                                    <th style="padding:10px; border-bottom:2px solid #E2E8F0;">Elaborado</th>
+                                    <th style="padding:10px; border-bottom:2px solid #E2E8F0;">Caducidad</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-lotes-produccion" style="font-size:0.9rem;">
+                                <tr><td colspan="5" style="text-align:center; padding:20px; color:var(--pos-gray);">Cargando registros...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- MODULE 3: CATÁLOGO -->
+        <main class="erp-module" id="module-catalogo" style="display:none; flex-grow:1; padding:20px; background:var(--pos-bg); flex-direction:column; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>🖼️ Gestor de Catálogo Digital (Storage)</h2>
+                <div style="background:#FFF; border:1px solid #CCC; border-radius:8px; display:flex; overflow:hidden;">
+                    <input type="file" id="cat-file-input" style="display:none" accept="image/*" multiple onchange="subirArchivos()">
+                    <button class="btn btn-gold" style="border:none; border-radius:0; padding:10px 20px; font-weight:bold; cursor:pointer;" onclick="document.getElementById('cat-file-input').click()">+ Subir Fotos / PDF</button>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:20px; flex-grow:1; height:100%; min-height:400px;">
+                <!-- Left: Folders -->
+                <div style="width:250px; background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-border); box-shadow:0 4px 6px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
+                    <h3 style="margin-top:0; border-bottom:1px solid #EEE; padding-bottom:10px; font-size:1rem;">Carpetas Virtuales</h3>
+                    <ul id="cat-folders-list" style="list-style:none; padding:0; margin:0; flex-grow:1; overflow-y:auto;">
+                        <!-- Poblado por JS -->
+                    </ul>
+                    <div style="margin-top:10px; display:flex; gap:5px;">
+                        <input type="text" id="cat-new-folder" placeholder="Ej: bodas" style="width:100%; padding:8px; border:1px solid #CCC; border-radius:6px;">
+                        <button class="btn btn-black" style="padding:8px 12px; border-radius:6px;" onclick="crearCarpetaVisual()">Crear</button>
+                    </div>
+                </div>
+
+                <!-- Right: Gallery -->
+                <div style="flex:1; background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-border); box-shadow:0 4px 6px rgba(0,0,0,0.02); overflow-y:auto;">
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #EEE; padding-bottom:10px; margin-bottom:15px;">
+                        <h3 style="margin:0; font-size:1rem; color:var(--pos-gray);">Explorando: <span id="cat-current-path" style="color:var(--pos-text);">Raíz (/)</span></h3>
+                    </div>
+                    
+                    <div id="cat-gallery-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:15px;">
+                        <p style="grid-column:1/-1; text-align:center; color:var(--pos-gray); padding:3rem;">Conectando al Bucket de Supabase...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- MODULE 4: RECETAS (Ingeniería de Menú / BOM) -->
+        <main class="erp-module" id="module-recetas" style="display:none; flex-grow:1; padding:20px; background:var(--pos-bg); flex-direction:column; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>📜 Ingeniería de Menú (Bill of Materials)</h2>
+            </div>
+
+            <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                
+                <!-- Selector y Detalle de Receta -->
+                <div style="background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-border); flex:1; min-width:350px; box-shadow:0 4px 6px rgba(0,0,0,0.02);">
+                    <h3 style="margin-top:0; border-bottom:1px solid #EEE; padding-bottom:10px;">Información Base</h3>
+                    
+                    <div style="margin-bottom:15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Producto Referencia</label>
+                        <select id="receta-prod-selector" style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC;" onchange="loadDetalleReceta()">
+                            <option value="">Cargando productos...</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom:15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Preparación Mágica (Texto Opcional)</label>
+                        <textarea id="receta-preparacion" rows="4" style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;" placeholder="Paso 1: Previo paso de harina..."></textarea>
+                    </div>
+
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Enlace a PDF Oficial (Subido Externamente)</label>
+                        <input type="text" id="receta-pdf" style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;" placeholder="https://supabase.../receta.pdf">
+                        <div style="margin-top:5px; text-align:right;">
+                            <a href="#" id="receta-pdf-link" target="_blank" style="font-size:0.8rem; color:var(--pos-primary); display:none;">Ver PDF Actual</a>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-black" style="width:100%; padding:12px; border-radius:8px;" onclick="guardarMetaReceta()">Guardar Receta Magna</button>
+                    <input type="hidden" id="current-id-receta" value="">
+                </div>
+
+                <!-- Fórmula / BOM -->
+                <div style="background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-border); flex:2; min-width:450px; box-shadow:0 4px 6px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
+                    <h3 style="margin-top:0; border-bottom:1px solid #EEE; padding-bottom:10px;">Fórmula Unitaria (Calculado sobre Tamaño 'Individual')</h3>
+                    
+                    <div style="background:#EEF2F6; padding:15px; border-radius:8px; display:flex; gap:10px; align-items:flex-end; margin-bottom:15px;">
+                        <div style="flex:2;">
+                            <label style="display:block; margin-bottom:5px; font-size:0.8rem; font-weight:bold;">Ingrediente Físico</label>
+                            <select id="receta-ingrediente-add" style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC;">
+                                <option value="">Selecciona materia prima</option>
+                            </select>
+                        </div>
+                        <div style="flex:1;">
+                            <label style="display:block; margin-bottom:5px; font-size:0.8rem; font-weight:bold;">Cantidad</label>
+                            <input type="number" id="receta-qty-add" step="0.01" style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;" placeholder="Ej. 250">
+                        </div>
+                        <div>
+                            <button onclick="agregarIngredienteReceta()" class="btn btn-gold" style="padding:10px 20px; border-radius:6px; border:none; font-weight:bold; cursor:pointer;">Añadir</button>
+                        </div>
+                    </div>
+
+                    <div style="flex-grow:1; overflow-y:auto;">
+                        <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                            <thead>
+                                <tr style="background:#1A202C; text-align:left; color:#FFF; font-size:0.85rem;">
+                                    <th style="padding:10px; border-bottom:2px solid #000;">Ingrediente</th>
+                                    <th style="padding:10px; border-bottom:2px solid #000;">Cantidad Base</th>
+                                    <th style="padding:10px; border-bottom:2px solid #000;">Medida</th>
+                                    <th style="padding:10px; border-bottom:2px solid #000; text-align:center;">Quitar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-formula" style="font-size:0.9rem;">
+                                <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--pos-gray);">Selecciona un producto a la izquierda.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="padding-top:10px; font-size:0.8rem; color:var(--pos-gray);">
+                        * IA Matemática: Al producir una variante Superior ("Familiar", "Mediano"), el sistema multiplicará esta base unitaria automáticamente (Ej. Familiar = Base x 3) para descontarlo de tu Stock Crudo.
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- MODULE 5: INVENTARIO -->
+        <main class="erp-module" id="module-inventario" style="display:none; flex-grow:1; padding:20px; background:var(--pos-bg); flex-direction:column; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>📦 Bodega Matriz (Stock Físico)</h2>
+            </div>
+            
+            <!-- Sub-Tabs Inventario -->
+            <div style="display:flex; gap:10px; margin-bottom:20px;">
+                <button class="cat-btn active" id="btn-tab-terminados" onclick="switchInvTab('terminados')">🍰 Productos Terminados</button>
+                <button class="cat-btn" id="btn-tab-ingredientes" onclick="switchInvTab('ingredientes')">🌾 Materia Prima (Ingredientes)</button>
+            </div>
+
+            <!-- Tab 1: Productos Terminados -->
+            <div id="inv-tab-terminados" style="display:block; background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-border); min-width:400px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #EEE; padding-bottom:10px;">
+                    <h3 style="margin:0;">Stock de Tienda</h3>
+                    <button class="btn btn-black" style="padding:5px 15px; border-radius:6px; font-size:0.85rem;" onclick="abrirModalNuevoProducto()">+ Nuevo Producto</button>
+                </div>
+                <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                    <thead>
+                        <tr style="background:#F7FAFC; text-align:left; color:var(--pos-gray); font-size:0.85rem;">
+                            <th style="padding:10px; border-bottom:2px solid #E2E8F0;">Producto</th>
+                            <th style="padding:10px; border-bottom:2px solid #E2E8F0;">Tamaño</th>
+                            <th style="padding:10px; border-bottom:2px solid #E2E8F0; text-align:right;">Unidades Disponibles</th>
+                            <th style="padding:10px; border-bottom:2px solid #E2E8F0; text-align:center;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-inv-terminados" style="font-size:0.9rem;">
+                        <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--pos-gray);">Cargando stock...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tab 2: Materia Prima -->
+            <div id="inv-tab-ingredientes" style="display:none; background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-border); min-width:400px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #EEE; padding-bottom:10px;">
+                    <h3 style="margin:0;">Materia Prima</h3>
+                    <button class="btn btn-black" style="padding:5px 15px; border-radius:6px; font-size:0.85rem;" onclick="promptNuevoIngrediente()">+ Nuevo Ingrediente</button>
+                </div>
+                
+                <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                    <thead>
+                        <tr style="background:#F7FAFC; text-align:left; color:var(--pos-gray); font-size:0.85rem;">
+                            <th style="padding:10px; border-bottom:2px solid #E2E8F0;">Ingrediente</th>
+                            <th style="padding:10px; border-bottom:2px solid #E2E8F0;">Stock Global</th>
+                            <th style="padding:10px; border-bottom:2px solid #E2E8F0;">Medida</th>
+                            <th style="padding:10px; border-bottom:2px solid #E2E8F0;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-inv-ingredientes" style="font-size:0.9rem;">
+                        <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--pos-gray);">Cargando materia prima...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <!-- MODULE 6: FINANZAS E IA -->
+        <main class="erp-module" id="module-finanzas" style="display:none; flex-grow:1; padding:20px; background:var(--pos-bg); flex-direction:column; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>📊 Estados de Cuenta y CEO-Brain (IA)</h2>
+                <button class="btn btn-black" onclick="initFinanzas()">Refrescar Datos</button>
+            </div>
+
+            <!-- Resumen Kpis -->
+            <div style="display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap;">
+                <div style="background:#FFF; padding:20px; border-radius:12px; border:1px solid #E2E8F0; flex:1; min-width:200px; box-shadow:0 2px 4px rgba(0,0,0,0.02); text-align:center;">
+                    <p style="margin:0; font-size:0.9rem; color:var(--pos-gray); font-weight:600;">Ingreso Total</p>
+                    <h3 id="fin-ingresos" style="margin:10px 0 0 0; font-size:1.8rem; color:var(--pos-primary);">$0.00</h3>
+                </div>
+                <div style="background:#FFF; padding:20px; border-radius:12px; border:1px solid #E2E8F0; flex:1; min-width:200px; box-shadow:0 2px 4px rgba(0,0,0,0.02); text-align:center;">
+                    <p style="margin:0; font-size:0.9rem; color:var(--pos-gray); font-weight:600;">Balance / Utilidad</p>
+                    <h3 id="fin-utilidad" style="margin:10px 0 0 0; font-size:1.8rem; color:#276749;">$0.00</h3>
+                </div>
+                <div style="background:#FFF; padding:20px; border-radius:12px; border:1px solid #E2E8F0; flex:1; min-width:200px; box-shadow:0 2px 4px rgba(0,0,0,0.02); text-align:center;">
+                    <p style="margin:0; font-size:0.9rem; color:var(--pos-gray); font-weight:600;">Capital Físico (Stock Tienda)</p>
+                    <h3 id="fin-stock" style="margin:10px 0 0 0; font-size:1.8rem; color:#2B6CB0;">0 Uds</h3>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:20px; flex-grow:1; flex-wrap:wrap;">
+                
+                <!-- Historial Contable -->
+                <div style="background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-border); flex:2; min-width:400px; box-shadow:0 4px 6px rgba(0,0,0,0.02); display:flex; flex-direction:column;">
+                    <h3 style="margin-top:0; border-bottom:1px solid #EEE; padding-bottom:10px;">Libro Mayor Mágico (Últimos 15 movimientos)</h3>
+                    <div style="flex-grow:1; overflow-y:auto;">
+                        <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                            <thead>
+                                <tr style="background:#1A202C; text-align:left; color:#FFF; font-size:0.85rem;">
+                                    <th style="padding:10px; border-bottom:2px solid #000;">ID</th>
+                                    <th style="padding:10px; border-bottom:2px solid #000;">Concepto</th>
+                                    <th style="padding:10px; border-bottom:2px solid #000;">Tipo</th>
+                                    <th style="padding:10px; border-bottom:2px solid #000; text-align:right;">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-finanzas" style="font-size:0.9rem;">
+                                <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--pos-gray);">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Agente IA Predictivo -->
+                <div style="background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-gold); flex:1; min-width:300px; box-shadow:0 4px 15px rgba(212,175,55,0.1); display:flex; flex-direction:column;">
+                    <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #EEE; padding-bottom:10px; margin-bottom:15px;">
+                        <span style="font-size:2rem;">🧠</span>
+                        <div>
+                            <h3 style="margin:0; color:var(--pos-primary);">Analista Monárquico</h3>
+                            <p style="margin:0; font-size:0.8rem; color:var(--pos-gray);">Powered by IA Predictiva</p>
+                        </div>
+                    </div>
+                    
+                    <div id="ai-chat-output" style="flex-grow:1; background:#F7FAFC; padding:15px; border-radius:8px; border:1px solid #E2E8F0; font-size:0.9rem; margin-bottom:15px; font-family:monospace; color:#2D3748; overflow-y:auto;">
+                        El modelo está durmiendo. Haz clic en "Solicitar Audotiría" para despertar al CEO Brain y analizar la salud física y financiera de Monarca.
+                    </div>
+                    
+                    <button class="btn btn-gold" style="width:100%; padding:15px; border-radius:8px; font-weight:bold; font-size:1rem; border:none; cursor:pointer;" onclick="generarAuditoriaIA()">Generar Auditoría Estocástica</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- MODULE 7: USUARIOS -->
+        <main class="erp-module" id="module-usuarios" style="display:none; flex-grow:1; padding:20px; background:var(--pos-bg); flex-direction:column; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>👥 Directorio Monarca (Staff & Clientes Leales)</h2>
+                <button class="btn btn-black" onclick="initUsuarios()">Actualizar Directorio</button>
+            </div>
+
+            <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                
+                <!-- Formulario Nuevo Staff -->
+                <div style="background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-border); flex:1; min-width:300px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                    <h3 style="margin-top:0; border-bottom:1px solid #EEE; padding-bottom:10px;">Alta de Colaborador</h3>
+                    
+                    <form id="form-nuevo-usuario" onsubmit="registrarColaborador(event)">
+                        <div style="margin-bottom:15px;">
+                            <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Nombre Completo</label>
+                            <input type="text" id="nu-nombre" required style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;" placeholder="Ej. Ana Pérez">
+                        </div>
+                        <div style="margin-bottom:15px;">
+                            <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Correo Electrónico (Login)</label>
+                            <input type="email" id="nu-email" required style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;" placeholder="ana@monarca.com">
+                        </div>
+                        <div style="margin-bottom:15px;">
+                            <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Contraseña Temporal</label>
+                            <input type="text" id="nu-password" required style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;" placeholder="Mínimo 6 caracteres">
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Rol en Monarca OS</label>
+                            <select id="nu-rol" style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;">
+                                <option value="3">Caballero Staff (Punto de Venta)</option>
+                                <option value="1">Emperador (Administrador Total)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-gold" style="width:100%; padding:12px; font-size:1rem; border-radius:8px; font-weight:bold; border:none; cursor:pointer;">Registrar Colaborador</button>
+                    </form>
+                </div>
+
+                <!-- Tabla de Usuarios -->
+                <div style="background:var(--pos-surface); padding:20px; border-radius:12px; border:1px solid var(--pos-border); flex:2; min-width:400px; box-shadow:0 4px 6px rgba(0,0,0,0.02); display:flex; flex-direction:column; overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; min-width: 500px;">
+                        <thead>
+                            <tr style="background:#F7FAFC; text-align:left; color:var(--pos-gray); font-size:0.85rem;">
+                                <th style="padding:10px; border-bottom:2px solid #E2E8F0;">Usuario</th>
+                                <th style="padding:10px; border-bottom:2px solid #E2E8F0;">Rango Imperial</th>
+                                <th style="padding:10px; border-bottom:2px solid #E2E8F0;">Nivel Creador/Staff</th>
+                                <th style="padding:10px; border-bottom:2px solid #E2E8F0; text-align:right;">Puntos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-usuarios" style="font-size:0.9rem;">
+                            <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--pos-gray);">Cargando súbditos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </main>
+        
+    </div> <!-- Fin SPA Container -->
+
+    <!-- PAYMENT MODAL -->
+    <div class="modal-overlay" id="payment-modal">
+        <div class="modal-box" style="width: 450px;">
+            <h3 style="margin-top:0; font-family:var(--font-heading); font-size:1.5rem; text-align:center; margin-bottom:10px;">Cobro de Venta</h3>
+            <p style="text-align:center; margin-bottom:20px; color:var(--pos-gray);">Total a Cobrar: <strong id="modal-amount-display" style="color:var(--pos-text); font-size:1.5rem;">$0.00</strong></p>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span style="font-weight:bold;">💵 Efectivo</span>
+                    <div>$<input type="number" id="pay-efectivo" value="0" min="0" step="0.01" style="width:100px; text-align:right; padding:5px; border-radius:4px; border:1px solid #CCC;" oninput="calculateMixedPayment()"></div>
+                </label>
+                <label style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span style="font-weight:bold;">💳 Tarjeta (Terminal)</span>
+                    <div>$<input type="number" id="pay-tarjeta" value="0" min="0" step="0.01" style="width:100px; text-align:right; padding:5px; border-radius:4px; border:1px solid #CCC;" oninput="calculateMixedPayment()"></div>
+                </label>
+                <label style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span style="font-weight:bold;">🏦 Transferencia / Depósito</span>
+                    <div>$<input type="number" id="pay-transferencia" value="0" min="0" step="0.01" style="width:100px; text-align:right; padding:5px; border-radius:4px; border:1px solid #CCC;" oninput="calculateMixedPayment()"></div>
+                </label>
+            </div>
+
+            <div style="background:#F7FAFC; padding:15px; border-radius:8px; margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span>Total Ingresado:</span>
+                    <strong id="mixed-total-ingresado">$0.00</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                    <span id="mixed-restante-label">Faltante:</span>
+                    <strong id="mixed-restante-val" style="color:red;">$0.00</strong>
+                </div>
+            </div>
+            
+            <button class="btn-pay" id="btn-confirm-mixed-payment" onclick="processMixedPayment()" disabled>Confirmar Pago</button>
+            <button onclick="closePaymentModal()" style="width:100%; border:none; background:none; color:red; margin-top:10px; cursor:pointer;" class="btn">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- TICKET HIDDEN FRAME FOR PRINTING -->
+    <iframe id="print-frame" style="display:none;"></iframe>
+
+    <!-- MODAL NUEVO PRODUCTO TERMINADO -->
+    <div class="modal-overlay" id="modal-nuevo-producto">
+        <div class="modal-box" style="max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 30px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #EEE; padding-bottom: 10px; margin-bottom: 20px;">
+                <h3 id="modal-np-title" style="margin:0; font-family:var(--font-heading); font-size:1.5rem; color:var(--pos-primary);">Nuevo Producto de Catálogo</h3>
+                <button onclick="cerrarModalNuevoProducto()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--pos-gray);">&times;</button>
+            </div>
+            
+            <form id="form-nuevo-producto" onsubmit="guardarNuevoProducto(event)">
+                <input type="hidden" id="np-id-producto" value="">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Nombre del Producto *</label>
+                        <input type="text" id="np-nombre" required style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;" placeholder="Ej. Pastel de Limón">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Categoría *</label>
+                        <div style="display:flex; gap:5px;" id="np-cat-selector-group">
+                            <select id="np-categoria" required style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;">
+                                <option value="">Cargando...</option>
+                            </select>
+                            <button type="button" class="btn btn-black" style="padding:0 15px; border-radius:6px;" onclick="toggleNuevaCategoria()">+ Nueva</button>
+                        </div>
+                        <div id="np-cat-nueva-group" style="display:none; gap:5px; margin-top:5px;">
+                            <input type="text" id="np-nueva-cat-nombre" style="width:100%; padding:8px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;" placeholder="Nombre de categoría...">
+                            <button type="button" class="btn btn-gold" style="padding:0 15px; border-radius:6px;" onclick="guardarNuevaCategoria()">Guardar</button>
+                            <button type="button" class="btn btn-black" style="padding:0 15px; border-radius:6px;" onclick="toggleNuevaCategoria()">X</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Sabor Principal</label>
+                        <input type="text" id="np-sabor" style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;" placeholder="Ej. Cítrico / Vainilla">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Tipo de Venta</label>
+                        <select id="np-tipo" style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;">
+                            <option value="normal">Normal</option>
+                            <option value="especial">Especial (Couture)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Descripción Visual/Marketing</label>
+                    <textarea id="np-descripcion" rows="2" style="width:100%; padding:10px; border-radius:6px; border:1px solid #CCC; box-sizing:border-box;" placeholder="Describe la magia de este pastel..."></textarea>
+                </div>
+
+                <div style="border: 1px solid var(--pos-border); padding: 15px; border-radius: 8px; background: #F7FAFC; margin-bottom: 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                        <h4 style="margin:0; font-size:1.1rem;">Variantes (Tamaños y Precios)</h4>
+                        <button type="button" class="btn btn-black" style="padding: 5px 10px; font-size: 0.8rem;" onclick="addVarianteRow()">+ Añadir Tamaño</button>
+                    </div>
+                    
+                    <div id="np-variantes-container">
+                        <!-- Las variantes dinámicas se inyectarán aquí -->
+                    </div>
+                </div>
+
+                <button type="submit" id="modal-np-submit" class="btn btn-gold" style="width:100%; padding:15px; border-radius:8px; font-weight:bold; font-size:1.1rem; border:none; cursor:pointer;">Registrar Producto Oficial</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL SELECCIÓN DE VARIANTE (POS) -->
+    <div class="modal-overlay" id="modal-pos-variantes" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:10000; backdrop-filter:blur(5px);">
+        <div class="modal-box" style="background:#FFF; padding:30px; border-radius:12px; max-width:400px; width:90%; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #EEE; padding-bottom:10px; margin-bottom:20px;">
+                <h3 style="margin:0; font-family:var(--font-heading); font-size:1.3rem; color:var(--pos-primary);" id="pos-var-prod-name">Seleccionar Tamaño</h3>
+                <button onclick="document.getElementById('modal-pos-variantes').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--pos-gray);">&times;</button>
+            </div>
+            
+            <div id="pos-variantes-list" style="display:flex; flex-direction:column; gap:10px; max-height:60vh; overflow-y:auto;">
+                <!-- Opciones inyectadas por JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
+    <script src="pos.js"></script>
+    <script>
+        // Lógica de SPA (Single Page Application para Módulos ERP)
+        function switchErpModule(moduleId, navElement) {
+            // Quitar clase active
+            document.querySelectorAll('.pos-nav li').forEach(li => li.classList.remove('active'));
+            document.querySelectorAll('.erp-module').forEach(mod => {
+                mod.style.display = 'none';
+                mod.classList.remove('active');
+            });
+            
+            navElement.classList.add('active');
+            
+            const targetMod = document.getElementById('module-' + moduleId);
+            if (targetMod) {
+                targetMod.style.display = 'flex';
+                targetMod.classList.add('active');
+                
+                // Disparadores de Iniciación Automática
+                if (moduleId === 'produccion') {
+                    if (typeof initProduccion === 'function') initProduccion();
+                } else if (moduleId === 'inventario') {
+                    if (typeof initInventario === 'function') initInventario();
+                } else if (moduleId === 'pedidos') {
+                    if (typeof initPedidos === 'function') initPedidos();
+                } else if (moduleId === 'recetas') {
+                    if (typeof initRecetas === 'function') initRecetas();
+                } else if (moduleId === 'catalogo') {
+                    if (typeof initCatalogo === 'function') initCatalogo();
+                } else if (moduleId === 'finanzas') {
+                    if (typeof initFinanzas === 'function') initFinanzas();
+                } else if (moduleId === 'usuarios') {
+                    if (typeof initUsuarios === 'function') initUsuarios();
+                }
+            }
+        }
+    </script>
+    <script>
+        // Check Access specific to POS
+        window.addEventListener('DOMContentLoaded', async () => {
+            if(!window.DB) return;
+            const { data: { session } } = await window.DB.auth.getSession();
+            if (!session) {
+                window.location.href = "login.html";
+                return;
+            }
+            
+            // Check RBAC
+            const { data } = await window.DB.from('perfiles_cliente').select('id_rol, nombre_completo').eq('id', session.user.id).single();
+            if (!data || (data.id_rol !== 1 && data.id_rol !== 3)) {
+                alert("Acceso Denegado: No tienes permisos de Administrador o Staff.");
+                window.location.href = "perfil.html";
+                return;
+            }
+
+            document.getElementById('pos-admin-name').innerText = data.nombre_completo || "Colaborador";
+            // Iniciar POS logic
+            loadPosProducts();
+        });
+    </script>
+</body>
+</html>

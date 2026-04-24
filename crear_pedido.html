@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Pedido | Monarca Pastelería</title>
+    <meta name="description" content="Personaliza tu pastel paso a paso.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        :root {
+            --color-primary: #121212;
+            --color-secondary: var(--gold-primary);
+            --color-text: var(--text-primary);
+            --color-text-light: var(--text-muted);
+            --color-border: #EEEEEE;
+            --border-radius: 12px;
+            --color-white: #FFFFFF;
+        }
+
+        .page-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 992px) {
+            .page-layout {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+            .form-main-column {
+                flex: 1;
+                background: var(--color-white);
+                padding: 3rem;
+                border-radius: var(--border-radius);
+                box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            }
+            .form-sidebar-column {
+                width: 380px;
+                position: sticky;
+                top: 100px;
+                background: var(--color-white);
+                padding: 2.5rem;
+                border-radius: var(--border-radius);
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+                border: 2px solid #FAFAFA;
+                z-index: 10;
+            }
+        }
+        
+        @media (max-width: 991px) {
+            .form-main-column, .form-sidebar-column {
+                background: var(--color-white);
+                padding: 2rem;
+                border-radius: var(--border-radius);
+                box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            }
+        }
+
+        .form-container { width: 100%; }
+
+        .form-section-title {
+            margin-top: 2rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--color-border);
+            padding-bottom: 0.5rem;
+            color: var(--color-primary);
+            font-size: 1.4rem;
+        }
+
+        .form-group { margin-bottom: 1.5rem; }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            transition: var(--transition-smooth);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(18, 18, 18, 0.1);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .radio-card {
+            border: 2px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: 0.8rem 1.2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .radio-card:hover {
+            border-color: var(--color-secondary);
+            background-color: var(--bg-alt);
+        }
+
+        .radio-card input[type="radio"] { display: none; }
+
+        .radio-card:has(input:checked) {
+            border-color: var(--color-primary);
+            background-color: var(--bg-alt);
+            font-weight: bold;
+            color: var(--color-primary);
+        }
+
+        .hidden { display: none !important; }
+
+        .price-summary {
+            background-color: var(--bg-alt);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--color-primary);
+            margin-top: 2rem;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .price-total {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--color-primary);
+            border-top: 1px solid var(--color-border);
+            padding-top: 0.8rem;
+            margin-top: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+
+        /* Wizard UI */
+        .wizard-step {
+            border: 2px solid var(--color-border);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            background: white;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        .wizard-step.active {
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        .wizard-step.disabled {
+            opacity: 0.6;
+            pointer-events: none;
+            background: var(--bg-alt);
+            border-color: transparent;
+        }
+        .wizard-step.completed {
+            border-color: #E2E8F0;
+            background: var(--bg-alt);
+        }
+        .wizard-header {
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid transparent;
+        }
+        .wizard-step.active .wizard-header {
+            border-bottom: 1px solid var(--color-border);
+            background: var(--bg-alt);
+        }
+        .step-num {
+            background: var(--color-border);
+            color: var(--color-text);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+        }
+        .wizard-step.active .step-num {
+            background: var(--color-primary);
+            color: white;
+        }
+        .wizard-step.completed .step-num {
+            background: var(--color-secondary);
+            color: white;
+        }
+        .step-title {
+            font-family: var(--font-heading);
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--color-text);
+            margin: 0;
+            transition: all 0.3s;
+        }
+        .wizard-step.active .step-title, .wizard-step.completed .step-title {
+            color: var(--color-primary);
+        }
+        .wizard-body {
+            padding: 1.5rem;
+            animation: fadeIn 0.4s ease;
+        }
+        .wizard-summary {
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-alt);
+            border-top: 1px solid var(--color-border);
+        }
+        .summary-text {
+            font-weight: 600;
+            color: var(--color-text);
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .summary-text i {
+            color: var(--color-secondary);
+            font-size: 1.2rem;
+        }
+        .btn-change {
+            background: transparent;
+            border: 1px solid var(--color-primary);
+            color: var(--color-primary);
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .btn-change:hover {
+            background: var(--color-primary);
+            color: white;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Pills Container */
+        .pills-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+        .pill-card {
+            display: block;
+            cursor: pointer;
+            height: 100%;
+        }
+        .pill-card input[type="radio"] { display: none; }
+        .pill-content {
+            border: 2px solid var(--color-border);
+            border-radius: 12px;
+            padding: 1.2rem;
+            text-align: center;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        .pill-content:hover {
+            border-color: var(--color-secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .pill-card input:checked + .pill-content {
+            border-color: var(--color-primary);
+            background: var(--bg-alt);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transform: scale(1.02);
+        }
+        .pill-title {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: var(--color-text);
+            line-height: 1.2;
+        }
+        .pill-card input:checked + .pill-content .pill-title { color: var(--color-primary); }
+        .pill-price { font-size: 1.2rem; color: var(--color-secondary); font-weight: bold; }
+        .pill-stock { font-size: 0.8rem; color: #d35400; background: #fff3cd; padding: 3px 10px; border-radius: 20px; display: inline-block; }
+
+        /* Estilos del Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center;
+            z-index: 9999; opacity: 0; visibility: hidden; transition: all 0.3s ease; backdrop-filter: blur(5px);
+        }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        .modal-content { background: var(--color-white); width: 90%; max-width: 500px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: translateY(-20px); transition: transform 0.3s ease; overflow: hidden; text-align: center; }
+        .modal-overlay.show .modal-content { transform: translateY(0); }
+        .modal-header { background: var(--color-primary); color: white; padding: 1.5rem; }
+        .modal-icon { font-size: 3rem; margin-bottom: 0.5rem; color: var(--color-secondary); }
+        .modal-header h2 { font-size: 1.5rem; margin: 0; font-family: var(--font-heading); }
+        .modal-body { padding: 2rem; color: var(--color-text-light); font-size: 1.05rem; line-height: 1.5; }
+        .modal-footer { padding: 0 2rem 2rem 2rem; }
+    </style>
+</head>
+
+<body>
+
+    <monarca-navbar></monarca-navbar>
+
+    <main style="padding: 120px 2rem 4rem;">
+        <div class="section-header reveal active" style="margin-bottom: 2rem; text-align: center;">
+            <h2 style="font-size: 2.5rem;">Couture Order</h2>
+            <p>Diseña el final perfecto para tu celebración.</p>
+        </div>
+
+        <div class="container">
+            <div class="form-container">
+                <form id="orderForm" class="page-layout">
+
+                    <div class="form-main-column">
+                        <!-- WIZARD UI -->
+                        <h3 class="form-section-title" style="margin-top: 0;">1. Configura tu Pedido Paso a Paso</h3>
+                        
+                        <div id="step1-container" class="wizard-step active">
+                            <div class="wizard-header">
+                                <span class="step-num">1</span>
+                                <h4 class="step-title">¿Qué categoría exploraremos hoy?</h4>
+                            </div>
+                            <div class="wizard-body">
+                                <div id="categoriaOptions" class="pills-container">
+                                    <div style="text-align: center; padding: 2rem; color: var(--color-text-light); grid-column: 1/-1;">Cargando catálogo...</div>
+                                </div>
+                            </div>
+                            <div class="wizard-summary hidden" id="summary-categoria">
+                                <span class="summary-text" id="lblSelectedCategoria"><i class="fas fa-check-circle"></i> Categoría</span>
+                                <button type="button" class="btn-change" onclick="resetToStep(1)">Cambiar</button>
+                            </div>
+                        </div>
+
+                        <div id="step2-container" class="wizard-step disabled">
+                            <div class="wizard-header">
+                                <span class="step-num">2</span>
+                                <h4 class="step-title">Elige tu Pieza de Arte</h4>
+                            </div>
+                            <div class="wizard-body hidden">
+                                <div id="productoOptions" class="pills-container"></div>
+                            </div>
+                            <div class="wizard-summary hidden" id="summary-producto">
+                                <span class="summary-text" id="lblSelectedProduct"><i class="fas fa-check-circle"></i> Producto seleccionado</span>
+                                <button type="button" class="btn-change" onclick="resetToStep(2)">Cambiar</button>
+                            </div>
+                        </div>
+
+                        <div id="step3-container" class="wizard-step disabled">
+                            <div class="wizard-header">
+                                <span class="step-num">3</span>
+                                <h4 class="step-title">Sabor y Notas Base</h4>
+                            </div>
+                            <div class="wizard-body hidden">
+                                <div id="saborOptions" class="pills-container"></div>
+                            </div>
+                            <div class="wizard-summary hidden" id="summary-sabor">
+                                <span class="summary-text" id="lblSelectedSabor"><i class="fas fa-check-circle"></i> Sabor seleccionado</span>
+                                <button type="button" class="btn-change" onclick="resetToStep(3)">Cambiar</button>
+                            </div>
+                        </div>
+
+                        <div id="step4-container" class="wizard-step disabled">
+                            <div class="wizard-header">
+                                <span class="step-num">4</span>
+                                <h4 class="step-title">¿De qué tamaño será?</h4>
+                            </div>
+                            <div class="wizard-body hidden">
+                                <div id="tamañoFilter" class="radio-group" style="margin-bottom: 1.5rem; justify-content: center; display: none;">
+                                    <label class="radio-card" style="flex:0; min-width:150px;"><input type="radio" name="filtroExtra" value="normal" checked> Tamaños Normales</label>
+                                    <label class="radio-card" style="flex:0; min-width:150px;"><input type="radio" name="filtroExtra" value="extra"> Con Ingrediente Extra</label>
+                                </div>
+                                <div id="tamanoOptions" class="pills-container"></div>
+                            </div>
+                            <div class="wizard-summary hidden" id="summary-tamano">
+                                <span class="summary-text" id="lblSelectedTamano"><i class="fas fa-check-circle"></i> Tamaño seleccionado</span>
+                                <button type="button" class="btn-change" onclick="resetToStep(4)">Cambiar</button>
+                            </div>
+                        </div>
+
+                        <!-- Ocultos -->
+                        <input type="hidden" id="categoria_seleccionada" value="">
+                        <input type="hidden" id="sabor_seleccionado" value="">
+                        <input type="hidden" id="producto">
+                        <input type="hidden" id="tamano">
+
+                        <!-- SECCIÓN EXCLUSIVA DE PASTELES -->
+                        <div id="opcionesPastel" class="hidden"
+                            style="background: var(--bg-alt); padding: 1.5rem; border: 1px dashed var(--color-secondary); margin-bottom: 1.5rem; border-radius: var(--border-radius);">
+                            <h4 style="margin-bottom: 1rem; color: var(--color-primary); font-family: var(--font-heading);">Diseño Couture (Pasteles)</h4>
+
+                            <div class="grid-3">
+                                <div class="form-group">
+                                    <label class="form-label">Armado</label>
+                                    <div class="radio-group" style="flex-direction: column; gap:0.5rem;">
+                                        <label class="radio-card"><input type="radio" name="armado" value="Sencillo" checked> Sencillo</label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Pisos</label>
+                                    <select id="pisos" class="form-control">
+                                        <option value="1">1 Piso</option>
+                                        <option value="2">2 Pisos</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Acabado</label>
+                                    <select id="diseno_pastel" class="form-control">
+                                        <option value="Cover Lisa">Cover Lisa Fondant / Crema</option>
+                                        <option value="Naked">Naked Cake</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top: 1rem;">
+                                <label class="form-label" for="imagen_pastel" style="font-weight: 600;">Sube ideas de inspiración (Opcional - AWS S3)</label>
+                                <input type="file" id="imagen_pastel" class="form-control" accept="image/*" multiple style="padding-top: 10px;">
+                                <div id="preview_pastel_container" style="display: flex; gap: 10px; margin-top: 1rem; flex-wrap: wrap;"></div>
+                            </div>
+                        </div>
+
+                        <div id="seccionSaborDiseno">
+                            <h3 class="form-section-title">2. Toque Final y Dedicatoria</h3>
+                            <div class="form-group">
+                                <label class="form-label" for="dedicatoria">Mensaje en Plaqueta de Chocolate (Opcional)</label>
+                                <input type="text" id="dedicatoria" class="form-control" placeholder="Ej. ¡Feliz Aniversario Amor!" maxlength="50">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="descripcion">Peticiones Culinarias Adicionales (Opcional)</label>
+                                <textarea id="descripcion" class="form-control" style="min-height: 80px;" placeholder="Instrucciones para el maestro pastelero..." maxlength="500"></textarea>
+                            </div>
+                        </div>
+
+                        <h3 class="form-section-title">3. Calendario Monarquía</h3>
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label class="form-label">Fecha de Entrega/Recolección</label>
+                                <input type="date" id="fecha" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Hora de Agenda</label>
+                                <select id="hora" class="form-control" required>
+                                    <option value="" disabled selected>-- Elige una hora --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="form-sidebar-column">
+                        <!-- Panel Exclusivo para Staff -->
+                        <div id="admin-client-search" class="hidden" style="background: var(--bg-alt); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; border: 2px dashed var(--gold-primary);">
+                            <h4 style="color: var(--black-accent); margin-bottom: 10px; font-family: var(--font-heading);"><i class="fas fa-user-shield" style="color:var(--gold-primary);"></i> Modo Operador</h4>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Ingresa el correo del cliente para buscar su perfil o asignarle los puntos.</p>
+                            
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <div style="display:flex; gap:5px;">
+                                    <input type="email" id="search-email" class="form-control" placeholder="cliente@correo.com">
+                                    <button type="button" onclick="buscarCliente()" class="btn btn-black" style="padding: 0 15px;"><i class="fas fa-search"></i></button>
+                                </div>
+                            </div>
+
+                            <div id="client-search-result" style="font-size:0.9rem; margin-bottom: 10px; color: var(--gold-primary); font-weight:600;"></div>
+
+                            <div id="guest-details" class="hidden">
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <input type="text" id="guest-name" class="form-control" placeholder="Nombre completo del cliente" style="font-size:0.9rem;">
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden inputs para el submit -->
+                            <input type="hidden" id="final_client_id" value="">
+                            <input type="hidden" id="final_guest_email" value="">
+                            <input type="hidden" id="final_guest_name" value="">
+                        </div>
+
+                        <h3 style="margin-top:0; margin-bottom:1.5rem; font-family: var(--font-heading); font-size: 1.6rem; color: var(--color-primary); text-align: center; border-bottom: 2px solid var(--color-border); padding-bottom: 1rem;">Resumen de tu Orden</h3>
+    
+                        <div class="price-summary" style="margin-top:0; padding:0; background:none; border-left:none;">
+                            <div class="price-row" style="margin-bottom: 0.8rem;">
+                                <span style="font-size: 1rem; color: var(--color-text-light);">Subtotal Producción:</span>
+                                <span id="txtBase" style="font-weight: 500;">$0.00</span>
+                            </div>
+                            
+                            <div style="background-color: var(--bg-alt); padding: 1.5rem; border-radius: 12px; margin-top: 1.5rem; text-align: center; border: 1px solid var(--color-border);">
+                                <span style="display: block; font-size: 0.9rem; color: var(--color-text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Presupuesto Total Estimado</span>
+                                <span id="txtTotal" style="display: block; font-size: 2.2rem; font-weight: bold; color: var(--color-primary); line-height: 1;">$0.00</span>
+                            </div>
+
+                            <div class="price-row" style="margin-top: 1.5rem; font-size: 0.95rem; color: var(--color-secondary);">
+                                <span><i class="fas fa-lock"></i> Anticipo (50%):</span>
+                                <span id="txtDeposito" style="font-weight: bold;">$0.00</span>
+                            </div>
+                        </div>
+
+                        <hr style="border: none; border-top: 1px dashed var(--color-border); margin: 2rem 0;">
+
+                        <div class="form-group" style="display: flex; flex-direction: column; gap: 1rem;">
+                            <button type="submit" class="btn btn-black" style="font-size: 1.2rem; padding: 1.2rem; border-radius: 8px; width: 100%;">
+                                Solicitar Pedido <i class="fas fa-paper-plane" style="margin-left: 10px;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Informativo -->
+    <div id="paymentInfoModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <i class="fas fa-info-circle modal-icon" style="color:var(--white-accent);"></i>
+                <h2 style="color:var(--white-accent);">Información Monarca</h2>
+            </div>
+            <div class="modal-body">
+                <p>Las ordenes creadas mediante el portal entran directo al área de cotización.</p>
+                <p>Tu orden no pasará a producción hasta que transfieras o dejes tu <strong>anticipo</strong> con nuestros cajeros.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="closeModalBtn" class="btn btn-black" style="width: 100%;">De Acuerdo <i class="fas fa-check"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Éxito -->
+    <div id="addSuccessModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header" style="background: var(--gold-primary);">
+                <i class="fas fa-check-circle modal-icon" style="color: white; font-size: 3.5rem;"></i>
+                <h2 style="margin-top: 0.5rem; font-size: 1.6rem; color:white; font-family: var(--font-heading);">¡Orden Emitida!</h2>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem 2rem;">
+                <p style="font-size: 1.1rem; color: var(--color-text); margin-bottom: 1.5rem;">Tu obra de arte está siendo procesada en nuestros servidores para revisión de agenda.</p>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <a href="perfil.html" class="btn btn-black" style="width: 100%; font-size: 1.1rem; padding: 1rem; text-decoration: none;"><i class="fas fa-user-circle"></i> Ir a mi Perfil</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <monarca-footer></monarca-footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
+    <script src="components.js"></script>
+
+    <script>
+        // INIT AUTH se ha movido al DOMContentLoaded para usar Supabase Auth
+
+        // FECHAS
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('fecha').setAttribute('min', hoy);
+        
+        document.getElementById('fecha').addEventListener('change', () => {
+            const h = document.getElementById('hora');
+            h.innerHTML = '<option value="" disabled selected>-- Elige hora aproximada --</option>';
+            for(let i=10; i<=20; i++){
+                h.innerHTML += `<option value="${i}:00">${i}:00 Hrs</option>`;
+            }
+        });
+
+        // MODAL
+        setTimeout(() => document.getElementById('paymentInfoModal').classList.add('show'), 600);
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            document.getElementById('paymentInfoModal').classList.remove('show');
+        });
+
+        // LOAD DATA
+        document.addEventListener('DOMContentLoaded', async () => {
+            if(!window.DB) return;
+            
+            const { data: { session } } = await window.DB.auth.getSession();
+            if (!session) {
+                alert("Debes iniciar sesión para crear Obras Privadas.");
+                window.location.href = 'login.html';
+                return;
+            }
+            window.currentUserId = session.user.id;
+            
+            // Revisa si es admin o staff
+            try {
+                const {data: pf} = await window.DB.from('perfiles_cliente').select('id_rol').eq('id', window.currentUserId).single();
+                if(pf && (pf.id_rol === 1 || pf.id_rol === 3)) {
+                    window.isStaff = true;
+                    document.getElementById('admin-client-search').classList.remove('hidden');
+                }
+            } catch(e) {}
+
+            window.buscarCliente = async function() {
+                const email = document.getElementById('search-email').value.trim();
+                if(!email) return;
+                const res = document.getElementById('client-search-result');
+                res.innerText = 'Buscando...';
+                try {
+                    const {data, error} = await window.DB.from('perfiles_cliente').select('id, nombre_completo').eq('email', email).single();
+                    if(data) {
+                        res.innerText = `✅ Cliente encontrado: ${data.nombre_completo}`;
+                        document.getElementById('guest-details').classList.add('hidden');
+                        document.getElementById('final_client_id').value = data.id;
+                        document.getElementById('final_guest_email').value = '';
+                    } else {
+                        throw new Error("Not found");
+                    }
+                } catch(e) {
+                    res.innerText = `⚠️ Cliente nuevo. Ingresa su nombre para la orden.`;
+                    document.getElementById('guest-details').classList.remove('hidden');
+                    document.getElementById('final_client_id').value = '';
+                    document.getElementById('final_guest_email').value = email;
+                }
+            };
+            
+            try {
+                // Sacar Categorias
+                const {data: categorias} = await window.DB.from('categorias').select('*');
+                let catHtml = '';
+                categorias.forEach(c => {
+                    catHtml += `<label class="pill-card">
+                            <input type="radio" name="catRadio" value="${c.id_categoria}" data-nombre="${c.nombre.toLowerCase()}">
+                            <div class="pill-content" style="padding: 1.5rem 1rem;">
+                                <i class="fas fa-birthday-cake" style="font-size: 2.5rem; margin-bottom: 10px; color: var(--color-secondary);"></i>
+                                <span class="pill-title" style="font-size: 1.15rem;">${c.nombre}</span>
+                            </div>
+                        </label>`;
+                });
+                document.getElementById('categoriaOptions').innerHTML = catHtml;
+
+                document.querySelectorAll('input[name="catRadio"]').forEach(r => {
+                    r.addEventListener('change', async function() {
+                        const cID = this.value;
+                        const catNombre = this.dataset.nombre;
+                        
+                        if(catNombre.includes('pastel')) {
+                            document.getElementById('opcionesPastel').classList.remove('hidden');
+                        } else {
+                            document.getElementById('opcionesPastel').classList.add('hidden');
+                        }
+
+                        // Cargar Productos
+                        const {data: prods} = await window.DB.from('productos').select('*').eq('id_categoria', cID);
+                        
+                        let pHtml = '';
+                        prods.forEach(p => {
+                            pHtml += `<label class="pill-card">
+                            <input type="radio" name="prodRadio" value="${p.id_producto}" data-nombre="${p.nombre}">
+                            <div class="pill-content" style="padding:1rem;">
+                                <span class="pill-title" style="font-size: 1.1rem;">${p.nombre}</span>
+                            </div>
+                            </label>`;
+                        });
+                        document.getElementById('productoOptions').innerHTML = pHtml;
+                        
+                        // avanzar paso
+                        resetToStep(2);
+                        document.getElementById('summary-categoria').classList.remove('hidden');
+
+                        document.querySelectorAll('input[name="prodRadio"]').forEach(pr => {
+                            pr.addEventListener('change', async function() {
+                                const pID = this.value;
+                                document.getElementById('producto').value = pID;
+                                
+                                // cargar variantes (tamanos) directamente
+                                const {data: vars} = await window.DB.from('producto_variantes').select('*').eq('id_producto', pID);
+                                let varHtml = '';
+                                vars.forEach(v => {
+                                    varHtml += `<label class="pill-card">
+                                        <input type="radio" name="tamanoRadio" value="${v.id_variante}" data-precio="${v.precio_venta}">
+                                        <div class="pill-content">
+                                            <span class="pill-title">${v.tamaño}</span>
+                                            <span class="pill-price">$${v.precio_venta}</span>
+                                        </div>
+                                    </label>`;
+                                });
+                                document.getElementById('tamanoOptions').innerHTML = varHtml;
+
+                                const catNombreSel = document.querySelector('input[name="catRadio"]:checked').dataset.nombre;
+                                
+                                // Lógica del Paso 3 (Sabor/Masa)
+                                if(catNombreSel.includes('pastel')) {
+                                    let masaHtml = `
+                                        <label class="pill-card">
+                                            <input type="radio" name="masaRadio" value="Panqué (Tradicional)">
+                                            <div class="pill-content"><span class="pill-title">Panqué (Tradicional)</span></div>
+                                        </label>
+                                        <label class="pill-card">
+                                            <input type="radio" name="masaRadio" value="3 Leches">
+                                            <div class="pill-content"><span class="pill-title">3 Leches</span></div>
+                                        </label>
+                                    `;
+                                    document.getElementById('saborOptions').innerHTML = masaHtml;
+                                    
+                                    resetToStep(3);
+                                    document.getElementById('summary-producto').classList.remove('hidden');
+
+                                    document.querySelectorAll('input[name="masaRadio"]').forEach(mr => {
+                                        mr.addEventListener('change', function() {
+                                            document.getElementById('sabor_seleccionado').value = this.value;
+                                            document.getElementById('lblSelectedSabor').innerHTML = `<i class="fas fa-check-circle"></i> ${this.value}`;
+                                            resetToStep(4);
+                                            document.getElementById('summary-sabor').classList.remove('hidden');
+                                        });
+                                    });
+                                } else {
+                                    // Saltar Paso 3 si no es pastel
+                                    resetToStep(4);
+                                    document.getElementById('summary-producto').classList.remove('hidden');
+                                    // Limpiar seleccion previa
+                                    document.getElementById('sabor_seleccionado').value = '';
+                                }
+
+                                document.querySelectorAll('input[name="tamanoRadio"]').forEach(tr => {
+                                    tr.addEventListener('change', function() {
+                                        document.getElementById('tamano').value = this.value;
+                                        window.precioActual = parseFloat(this.dataset.precio);
+                                        actualizarPrecios();
+                                        
+                                        document.getElementById('step4-container').classList.remove('active');
+                                        document.getElementById('step4-container').classList.add('completed');
+                                        document.querySelector('#step4-container .wizard-body').classList.add('hidden');
+                                        document.getElementById('summary-tamano').classList.remove('hidden');
+                                    });
+                                });
+
+                            });
+                        });
+                    });
+                });
+            } catch(e) { console.error(e); }
+
+            // Simulamos paso 1 completo para reset visual
+            function resetToStep(step) {
+                // UI Magic para colapsar y expandir (basico)
+                for(let i=1; i<=4; i++){
+                    let st = document.getElementById('step'+i+'-container');
+                    let p = st.querySelector('.wizard-body');
+                    if(i === step) {
+                        st.classList.add('active'); st.classList.remove('disabled','completed');
+                        p.classList.remove('hidden');
+                    } else if(i < step) {
+                        st.classList.add('completed'); st.classList.remove('active','disabled');
+                        p.classList.add('hidden');
+                    } else {
+                        st.classList.add('disabled'); st.classList.remove('active','completed');
+                        p.classList.add('hidden');
+                    }
+                }
+            }
+            window.resetToStep = resetToStep;
+        });
+
+        function actualizarPrecios() {
+            let p = window.precioActual || 0;
+            document.getElementById('txtBase').innerText = `$${p.toFixed(2)}`;
+            document.getElementById('txtTotal').innerText = `$${p.toFixed(2)}`;
+            document.getElementById('txtDeposito').innerText = `$${(p/2).toFixed(2)}`;
+        }
+
+        document.getElementById('orderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const pID = document.getElementById('producto').value;
+            const tID = document.getElementById('tamano').value;
+            const dedicatoria = document.getElementById('dedicatoria').value;
+            const desc = document.getElementById('descripcion').value;
+            const fecha = document.getElementById('fecha').value;
+            const hora = document.getElementById('hora').value;
+            
+            if(!tID) return alert("Selecciona tu tamaño ideal antes de continuar.");
+            if(!fecha || !hora) return alert("Selecciona una fecha y hora de entrega.");
+
+            let notasTexto = `Entrega: ${fecha} a las ${hora}\n`;
+            
+            const isPastel = !document.getElementById('opcionesPastel').classList.contains('hidden');
+            if (isPastel) {
+                const masa = document.getElementById('sabor_seleccionado').value || 'Panqué (Tradicional)';
+                const armado = document.querySelector('input[name="armado"]:checked')?.value || "Sencillo";
+                const pisos = document.getElementById('pisos').value;
+                const diseno = document.getElementById('diseno_pastel').value;
+                notasTexto += `Pastel Couture -> Masa: ${masa} | Armado: ${armado} | Pisos: ${pisos} | Diseño: ${diseno}\n`;
+            }
+            if (desc) notasTexto += `Peticiones: ${desc}\n`;
+
+            try {
+                let finalIdCliente = window.currentUserId;
+                let emailInv = null;
+                let nomInv = null;
+                
+                if (window.isStaff) {
+                    const selId = document.getElementById('final_client_id').value;
+                    const gEmail = document.getElementById('final_guest_email').value;
+                    const gName = document.getElementById('guest-name').value;
+                    
+                    if (selId) {
+                        finalIdCliente = selId;
+                    } else if (gEmail && gName) {
+                        finalIdCliente = null; // Invitado
+                        emailInv = gEmail;
+                        nomInv = gName;
+                    } else {
+                        return alert("Modo Operador: Por favor busca un cliente o ingresa los datos del nuevo cliente invitado.");
+                    }
+                }
+
+                const folioRandom = 'ORD-' + Math.floor(Math.random() * 1000000) + '-' + Date.now().toString().slice(-4);
+                
+                const {data: ins, error} = await window.DB.from('pedidos').insert({
+                    folio: folioRandom,
+                    id_cliente: finalIdCliente,
+                    email_invitado: emailInv,
+                    nombre_invitado: nomInv,
+                    total: window.precioActual,
+                    estado: 'pendiente'
+                }).select();
+                
+                if(error) throw error;
+                
+                await window.DB.from('detalle_pedido').insert({
+                    id_pedido: ins[0].id_pedido,
+                    id_variante: tID,
+                    cantidad: 1,
+                    precio_unitario: window.precioActual,
+                    dedicatoria: dedicatoria,
+                    observaciones_cliente: notasTexto
+                });
+
+                // --- NOTIFICACIÓN DE WHATSAPP ---
+                if (typeof window.enviarNotificacionWhatsApp === 'function') {
+                    const origenStr = window.isStaff ? "MOSTRADOR/STAFF" : "CLIENTE WEB";
+                    let clienteN = nomInv || (window.currentUser ? window.currentUser.email : "Invitado");
+                    const msgWhatsApp = `👑 *NUEVO PEDIDO* (${origenStr}) 👑\nFolio: ${folioRandom}\nCliente: ${clienteN}\nTotal: $${window.precioActual}\n\n*Revisa la bandeja en el POS para aprobarlo.*`;
+                    window.enviarNotificacionWhatsApp(msgWhatsApp);
+                }
+
+                document.getElementById('addSuccessModal').classList.add('show');
+
+            } catch(err) {
+                console.error(err);
+                const msg = err.message || JSON.stringify(err);
+                alert("Error de Seguridad en Base de Datos (Supabase): " + msg + "\n\nSi dice '403' o 'RLS', ve al dashboard de Supabase -> Authentication o Table Editor y asegúrate de que la tabla 'pedidos' y 'detalle_pedido' tienen permisos (Policies) para insertar, o deshabilita el RLS temporalmente.");
+            }
+        });
+
+    </script>
+</body>
+</html>

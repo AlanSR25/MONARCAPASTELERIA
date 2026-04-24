@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monarca - Estado de Pedido</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .portal-container {
+            max-width: 800px;
+            margin: 120px auto 40px;
+            background: var(--bg-alt);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--color-border);
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        .status-pendiente { background: #FEEBC8; color: #DD6B20; }
+        .status-esperando_pago { background: #FED7D7; color: #E53E3E; }
+        .status-confirmado { background: #C6F6D5; color: #2F855A; }
+        .status-entregado { background: #BEE3F8; color: #2B6CB0; }
+
+        .payment-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .payment-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 2px solid var(--color-border);
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .payment-card:hover {
+            border-color: var(--color-primary);
+            transform: translateY(-5px);
+        }
+        .payment-icon {
+            font-size: 2.5rem;
+            color: var(--color-primary);
+            margin-bottom: 1rem;
+        }
+        .qr-box {
+            background: white;
+            padding: 1rem;
+            border: 1px dashed #ccc;
+            display: inline-block;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <monarca-navbar></monarca-navbar>
+
+    <div class="portal-container" id="portal-content">
+        <div style="text-align:center; padding: 4rem;">
+            <i class="fas fa-spinner fa-spin fa-3x" style="color:var(--color-primary);"></i>
+            <p style="margin-top: 1rem;">Buscando pedido...</p>
+        </div>
+    </div>
+
+    <monarca-footer></monarca-footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
+    <script src="components.js"></script>
+    <!-- Stripe.js para la redirección segura -->
+    <script src="https://js.stripe.com/v3/"></script>
+
+    <script>
+        // La clave pública que me proporcionaste
+        const stripe = Stripe('pk_test_51TPahtRsVtPB8IQxrWOTrz1xWXXsENj0fBva4vbW2O6DJpUjdHEVcoCDkG8xLmzEyli8EIKIx9CuRk6iFchZTYwC00kRM3VjzJ');
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const folio = urlParams.get('folio');
+
+            if (!folio) {
+                document.getElementById('portal-content').innerHTML = `<h2 style="text-align:center; color:#E53E3E;">Folio no proporcionado</h2>`;
+                return;
+            }
+
+            const pagoStatus = urlParams.get('pago');
+            const sessionId = urlParams.get('session_id');
+
+            if (pagoStatus === 'cancelado') {
+                alert("El pago fue cancelado o no se completó.");
+                window.history.replaceState({}, document.title, window.location.pathname + "?folio=" + folio);
+            } else if (pagoStatus === 'exito' && sessionId) {
+                // Mostrar pantalla de carga
+                document.getElementById('portal-content').innerHTML = `
+                    <div style="text-align:center; padding: 4rem;">
+                        <i class="fas fa-spinner fa-spin fa-3x" style="color:var(--color-primary);"></i>
+                        <p style="margin-top: 1rem; font-weight:bold; font-size:1.2rem;">Verificando pago seguro con Stripe...</p>
+                        <p style="font-size:0.9rem; color:var(--text-muted);">Por favor no cierres esta ventana.</p>
+                    </div>
+                `;
+                
+                try {
+                    // Invocar la verificación en Supabase
+                    const { data, error } = await window.DB.functions.invoke('smart-endpoint', {
+                        body: { action: 'verificar_pago', session_id: sessionId }
+                    });
+                    
+                    if (error) throw error;
+                    if (data && data.success) {
+                        alert("¡Pago validado y guardado con éxito! 🎉 El adeudo se ha actualizado.");
+                    } else {
+                        alert("Aviso: " + (data?.error || data?.mensaje || "Verificación pendiente."));
+                    }
+                } catch(e) {
+                    console.error("Error verificando pago:", e);
+                    alert("Aviso al verificar pago: " + e.message);
+                }
+                
+                // Recargar página limpia para ver los nuevos datos actualizados
+                window.location.href = window.location.pathname + "?folio=" + folio;
+                return; // Evita que siga ejecutando el resto mientras recarga
+            }
+
+            try {
+                // Fetch pedido
+                const { data: p, error } = await window.DB.from('pedidos')
+                    .select('*, detalle_pedido(*, producto_variantes(tamaño, productos(nombre)))')
+                    .eq('folio', folio)
+                    .single();
+
+                if (error || !p) throw new Error("Pedido no encontrado");
+
+                const total = parseFloat(p.total);
+                const anticipo = parseFloat(p.anticipo || 0);
+                const faltante = total - anticipo;
+                const minimoRequerido = (total / 2);
+                const pagoFaltanteMinimo = Math.max(0, minimoRequerido - anticipo);
+
+                let statusClass = 'status-' + p.estado;
+                let statusText = p.estado.toUpperCase();
+                let statusDesc = '';
+
+                if (p.estado === 'pendiente') {
+                    statusText = 'EN REVISIÓN';
+                    statusDesc = 'El maestro pastelero está revisando tu orden. Pronto se te notificará para el pago.';
+                } else if (p.estado === 'esperando_pago') {
+                    statusText = 'APROBADO - REQUIERE ANTICIPO';
+                    statusDesc = `Falta cubrir al menos el 50% ($${minimoRequerido.toFixed(2)}) para que comience la producción.`;
+                } else if (p.estado === 'confirmado') {
+                    statusText = 'PAGADO Y EN PRODUCCIÓN';
+                    statusDesc = '¡Tu pedido está en el horno!';
+                } else if (p.estado === 'entregado') {
+                    statusText = 'ENTREGADO';
+                    statusDesc = 'Gracias por tu preferencia.';
+                }
+
+                let html = `
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 2rem;">
+                        <div>
+                            <h2 style="margin:0; font-family:var(--font-heading); color:var(--color-primary);">Folio: ${p.folio}</h2>
+                            <p style="margin:5px 0 0; color:var(--color-text-light);">📅 Entrega: ${p.fecha_entrega || 'Por definir'}</p>
+                        </div>
+                        <div class="status-badge ${statusClass}">${statusText}</div>
+                    </div>
+
+                    <div style="background:white; padding:1.5rem; border-radius:8px; margin-bottom:2rem;">
+                        <h4 style="margin-top:0;">Resumen Financiero</h4>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>Costo Total:</span> <strong>$${total.toFixed(2)}</strong></div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px; color:#2F855A;"><span>Anticipo Abonado:</span> <strong>$${anticipo.toFixed(2)}</strong></div>
+                        <div style="display:flex; justify-content:space-between; border-top:1px solid #EEE; padding-top:10px; font-size:1.2rem; color:#E53E3E;">
+                            <span>Resta por Pagar:</span> <strong>$${faltante.toFixed(2)}</strong>
+                        </div>
+                        <p style="font-size:0.9rem; color:var(--color-text-light); margin-top:10px;">${statusDesc}</p>
+                    </div>
+                `;
+
+                // Solo mostrar opciones de pago si falta anticipo y está en estado de cobro
+                if (p.estado === 'esperando_pago' || (p.estado === 'confirmado' && faltante > 0)) {
+                    html += `
+                        <h3 style="text-align:center; margin-bottom:1rem;">Opciones de Pago</h3>
+                        <div class="payment-options">
+                            
+                            <!-- Opción 1: Tarjeta (Stripe) -->
+                            <div class="payment-card">
+                                <i class="fas fa-credit-card payment-icon"></i>
+                                <h4>Pago con Tarjeta</h4>
+                                <p style="font-size:0.85rem; color:var(--color-text-light);">Pago seguro y automático mediante Stripe.</p>
+                                <button class="btn btn-black" style="width:100%; margin-top:10px;" onclick="iniciarPagoStripe('${p.id_pedido}', ${pagoFaltanteMinimo > 0 ? pagoFaltanteMinimo : faltante})">
+                                    Pagar $${(pagoFaltanteMinimo > 0 ? pagoFaltanteMinimo : faltante).toFixed(2)}
+                                </button>
+                            </div>
+
+                            <!-- Opción 2: Físico QR -->
+                            <div class="payment-card">
+                                <i class="fas fa-store payment-icon"></i>
+                                <h4>Pago en Sucursal</h4>
+                                <p style="font-size:0.85rem; color:var(--color-text-light);">Presenta este código al cajero.</p>
+                                <div class="qr-box">
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${p.folio}" alt="QR Pedido">
+                                </div>
+                            </div>
+
+                            <!-- Opción 3: Transferencia -->
+                            <div class="payment-card">
+                                <i class="fas fa-university payment-icon"></i>
+                                <h4>Transferencia</h4>
+                                <p style="font-size:0.85rem; color:var(--color-text-light);">Sube tu comprobante bancario para validación.</p>
+                                <button class="btn" style="background:white; border:2px solid var(--color-primary); color:var(--color-primary); width:100%; margin-top:10px;" onclick="alert('Funcionalidad de transferencia en desarrollo.')">Subir Comprobante</button>
+                            </div>
+
+                        </div>
+                    `;
+                }
+
+                document.getElementById('portal-content').innerHTML = html;
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('portal-content').innerHTML = `<h2 style="text-align:center; color:#E53E3E;">Error: ${err.message}</h2>`;
+            }
+        });
+
+        // ==========================================
+        // STRIPE CHECKOUT INTEGRATION
+        // ==========================================
+        window.iniciarPagoStripe = async function(id_pedido, monto) {
+            try {
+                // El botón muestra un estado de carga
+                const btn = event.target;
+                const oldText = btn.innerText;
+                btn.innerText = "Procesando...";
+                btn.disabled = true;
+
+                // Llamamos a la Edge Function de Supabase (el nombre real en tu panel es smart-endpoint)
+                const { data, error } = await window.DB.functions.invoke('smart-endpoint', {
+                    body: { 
+                        id_pedido: id_pedido, 
+                        monto: monto,
+                        url_retorno: window.location.href
+                    }
+                });
+
+                if (error) throw error;
+                if (!data || !data.id) throw new Error("No se pudo obtener la sesión de Stripe. Verifica que la Edge Function esté corriendo.");
+
+                // Redirigimos a la ventana segura de Stripe usando la librería local
+                const result = await stripe.redirectToCheckout({
+                    sessionId: data.id
+                });
+
+                if (result.error) {
+                    throw result.error;
+                }
+            } catch (err) {
+                console.error("Error en Stripe:", err);
+                alert("Error al iniciar el pago: " + err.message);
+                event.target.innerText = "Pagar de nuevo";
+                event.target.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>
